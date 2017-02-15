@@ -3,10 +3,9 @@ import requests
 import sys
 
 class CerberusClient(object):
-    """This is a Cerberus  Client Class that does Cerberus stuff"""
     HEADERS = {"Content-Type": "application/json"}
 
-    def __init__(self, username, password, cerberus_url = 'https://prod.cerberus.nikecloud.com/'):
+    def __init__(self, username, password, cerberus_url):
         self.cerberus_url = cerberus_url
         self.username = username
         self.password = password
