@@ -24,3 +24,10 @@ from cerberus_client import CerberusClient
 ```python
 client = CerberusClient(username, password))
 ```
+
+## Running Tests
+
+You can run all the unit tests using nosetests. Most of the tests are mocked.
+
+```bash
+$ nosetests --verbosity=2 tests/
