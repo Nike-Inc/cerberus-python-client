@@ -1,11 +1,12 @@
 import json
 import requests
 import sys
+import boto3
 
 class CerberusClient(object):
     HEADERS = {"Content-Type": "application/json"}
 
-    def __init__(self, username, password, cerberus_url):
+    def __init__(self, username=None, password=None, cerberus_url):
         self.cerberus_url = cerberus_url
         self.username = username
         self.password = password
@@ -34,6 +35,19 @@ class CerberusClient(object):
         if auth_resp.status_code != 200:
            auth_resp.raise_for_status()
         return auth_resp_json
+
+    def get_aws_auth(self):
+        account_id = boto3.client('sts').get_caller_identity().get('Account')
+        role_name = boto3.client('sts').get_caller_identity().get('Arn').split('/')[1]
+        # get the region - couldn't figure out how to do this with boto3
+        response = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document')
+        region = json.loads(response.text)['region']
+        request_body = {
+            'account_id': account_id,
+            'role_name': name,
+            'region': region
+        }
+        r = requests.post(url + '/v1/auth/iam-role', data=json.dumps(request_body))
 
     def get_mfa(self, auth_resp):
         """Gets MFA code from user and returns response which includes the client token"""

@@ -9,9 +9,16 @@ pull request to implement write operations)
 To learn more about Cerberus, please visit the [Cerberus website](http://engineering.nike.com/cerberus/).
 
 ## Installation
+This is a Python 3 project.
 
+Install the python required packages:
 ```bash
-pip install https://github.com/Nike-Inc/cerberus-python-client.git
+  $ pip3 install -r requirements.txt
+```
+
+Install the client:
+```bash
+pip3 install https://github.com/Nike-Inc/cerberus-python-client.git
 ```
 
 
