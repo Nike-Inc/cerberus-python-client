@@ -1,3 +1,4 @@
+import base64
 import json
 import requests
 import sys
@@ -8,14 +9,26 @@ class CerberusClient(object):
 
     def __init__(self, cerberus_url, username=None, password=None):
         self.cerberus_url = cerberus_url
-        self.username = username
-        self.password = password
+        self.username = username or ""
+        self.password = password or ""
         # aws creds
         self.account_id = None
         self.role_name = None
         self.region = None
         self.token = None
         self.set_token()
+
+    def set_token(self):
+        if self.username:
+            self.token =  self.get_user_token()
+        else:
+            self.set_aws_auth()
+            self.token =  self.get_iam_role_token()
+     #   elif self.account_id is not None:
+     #       return self.get_iam_role_token()
+     #   else:
+     #       print("ERROR: No auth set")
+     #       sys.exit(2)
 
     def get_user_token(self):
         """sets client token from Cerberus"""
@@ -25,17 +38,7 @@ class CerberusClient(object):
         else:
             token_resp = auth_resp
         token = token_resp['data']['client_token']['client_token']
-        self.token = token
-
-    def set_token(self):
-        if self.username is not None:
-            return self.get_user_token()
-        elif self.account_id is not None:
-            return self.get_iam_role_token()
-        else:
-            print("ERROR: No auth set")
-            sys.exit(2)
-
+        return token
 
     def get_token(self):
         """Returns a client token from Cerberus"""
@@ -51,7 +54,7 @@ class CerberusClient(object):
         return auth_resp_json
 
     def set_aws_auth(self):
-        """FINISH THIS"""
+        """Sets the variables needed for AWS Auth"""
         boto = boto3.client('sts')
         self.account_id = boto.get_caller_identity().get('Account')
         self.role_name = boto.get_caller_identity().get('Arn').split('/')[1]
@@ -60,12 +63,13 @@ class CerberusClient(object):
         self.region = json.loads(response.text)['region']
 
     def get_iam_role_token(self):
-        """FINISH THIS"""
+        """Returns a clinet token from Cerberus"""
         request_body = {
             'account_id': self.account_id,
             'role_name': self.role_name,
             'region': self.region
         }
+
         encrypted_resp = requests.post(self.cerberus_url + '/v1/auth/iam-role',
                                         data=json.dumps(request_body))
         encrypted_resp_json = json.loads(encrypted_resp.text)
@@ -80,8 +84,7 @@ class CerberusClient(object):
             CiphertextBlob=base64.decodebytes(bytes(auth_data, 'utf-8'))
         )
 
-        token = json.loads(
-                    response['Plaintext'].decode('utf-8'))['client_token']
+        token = json.loads( response['Plaintext'].decode('utf-8'))['client_token']
         return token
 
     def get_mfa(self, auth_resp):
@@ -132,15 +135,16 @@ class CerberusClient(object):
         print("ERROR: " + sdb + " not found")
         sys.exit(2)
 
+
     def get_secret(self,vault_path,key):
         """Returs the secret based on the vault_path and key"""
         secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path,
-                                  headers={'Content-Type' : 'application/json', 'X-Vault-Token': self.token})
+                                      headers={'Content-Type' : 'application/json', 'X-Vault-Token': self.token})
         secret_resp_json = json.loads(secret_resp.text)
         if secret_resp.status_code != 200:
-            secret_resp.raise_for_status()
+          secret_resp.raise_for_status()
         if key in secret_resp_json['data']:
-            return secret_resp_json['data'][key]
+          return secret_resp_json['data'][key]
         else:
-            print("ERROR: key " + key + " not found")
-            sys.exit(2)
+          print("ERROR: key " + key + " not found")
+          sys.exit(2)
