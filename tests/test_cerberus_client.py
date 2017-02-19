@@ -14,7 +14,7 @@ class TestCerberusClient(object):
     @classmethod
     @patch('cerberus_client.CerberusClient.set_token', return_value='1234-asdf-1234hy-qwer6')
     def setup_class(self, mock_token):
-        self.client = CerberusClient('testuser', 'hardtoguesspasswd', "https://cerberus.fake.com")
+        self.client = CerberusClient("https://cerberus.fake.com",'testuser', 'hardtoguesspasswd' )
         self.auth_resp = """{"status": "mfa_req", "data":
                         {"username": "unicorn@rainbow.com",
                         "state_token": "0127a384d305138d4e",

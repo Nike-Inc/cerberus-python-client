@@ -6,14 +6,18 @@ import boto3
 class CerberusClient(object):
     HEADERS = {"Content-Type": "application/json"}
 
-    def __init__(self, username=None, password=None, cerberus_url):
+    def __init__(self, cerberus_url, username=None, password=None):
         self.cerberus_url = cerberus_url
         self.username = username
         self.password = password
+        # aws creds
+        self.account_id = None
+        self.role_name = None
+        self.region = None
         self.token = None
         self.set_token()
 
-    def set_token(self):
+    def get_user_token(self):
         """sets client token from Cerberus"""
         auth_resp = self.get_auth()
         if auth_resp['status'] == 'mfa_req':
@@ -22,6 +26,16 @@ class CerberusClient(object):
             token_resp = auth_resp
         token = token_resp['data']['client_token']['client_token']
         self.token = token
+
+    def set_token(self):
+        if self.username is not None:
+            return self.get_user_token()
+        elif self.account_id is not None:
+            return self.get_iam_role_token()
+        else:
+            print("ERROR: No auth set")
+            sys.exit(2)
+
 
     def get_token(self):
         """Returns a client token from Cerberus"""
@@ -36,35 +50,38 @@ class CerberusClient(object):
            auth_resp.raise_for_status()
         return auth_resp_json
 
-    def get_aws_auth(self):
+    def set_aws_auth(self):
         """FINISH THIS"""
-        account_id = boto3.client('sts').get_caller_identity().get('Account')
-        role_name = boto3.client('sts').get_caller_identity().get('Arn').split('/')[1]
+        boto = boto3.client('sts')
+        self.account_id = boto.get_caller_identity().get('Account')
+        self.role_name = boto.get_caller_identity().get('Arn').split('/')[1]
         # get the region - couldn't figure out how to do this with boto3
         response = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document')
-        region = json.loads(response.text)['region']
+        self.region = json.loads(response.text)['region']
 
     def get_iam_role_token(self):
         """FINISH THIS"""
         request_body = {
-            'account_id': account_id,
-            'role_name': name,
-            'region': region
+            'account_id': self.account_id,
+            'role_name': self.role_name,
+            'region': self.region
         }
-        encrypted_resp = requests.post(self.cerberus_url + '/v1/auth/iam-role', data=json.dumps(request_body))
+        encrypted_resp = requests.post(self.cerberus_url + '/v1/auth/iam-role',
+                                        data=json.dumps(request_body))
         encrypted_resp_json = json.loads(encrypted_resp.text)
         if encrypted_resp.status_code != 200:
            encrypted_resp.raise_for_status()
 
         auth_data = encrypted_resp_json['auth_data']
 
-        client = boto3.client('kms', region_name=region)
+        client = boto3.client('kms', region_name=self.region)
 
         response = client.decrypt(
             CiphertextBlob=base64.decodebytes(bytes(auth_data, 'utf-8'))
         )
 
-        token = json.loads(response['Plaintext'].decode('utf-8'))['client_token']
+        token = json.loads(
+                    response['Plaintext'].decode('utf-8'))['client_token']
         return token
 
     def get_mfa(self, auth_resp):
