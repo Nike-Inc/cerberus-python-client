@@ -107,3 +107,10 @@ class TestUserAuth(object):
 
         # confirm the json matches
         assert_dict_equal(response, json.loads(mfa_data))
+
+        @raises(HTTPError)
+        @patch('requests.get')
+        def test_when_not_200_status_code(self, mock_get):
+            mock_resp = self._mock_response(status=404, raise_for_status=HTTPError("google is down"))
+            mock_get.return_value = mock_resp
+            self.client.get_auth()
