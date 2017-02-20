@@ -4,7 +4,7 @@ import requests
 import sys
 import boto3
 
-from user_auth import UserAuth
+from .user_auth import UserAuth
 
 class CerberusClient(object):
     HEADERS = {"Content-Type": "application/json"}
