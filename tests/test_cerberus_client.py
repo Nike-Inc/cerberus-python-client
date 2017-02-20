@@ -7,7 +7,7 @@ import json
 from requests.exceptions import HTTPError
 
 # Local imports...
-from cerberus_client import CerberusClient
+from cerberus_client.cerberus_client import CerberusClient
 
 class TestCerberusClient(object):
 
