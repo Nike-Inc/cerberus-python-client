@@ -9,10 +9,10 @@ class AWSAuth(object):
     def __init__(self, cerberus_url):
         self.cerberus_url = cerberus_url
         # aws creds
-        self.set_auth()
         self.account_id = None
         self.role_name = None
         self.region = None
+        self.set_auth()
 
 
     def set_auth(self):
