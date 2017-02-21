@@ -25,11 +25,17 @@ pip3 install https://github.com/Nike-Inc/cerberus-python-client.git
 ## Usage
 
 ```python
-from cerberus_client import CerberusClient
+from cerberus.client import CerberusClient
 ```
 
+To use with a username and password (CLI usage)
 ```python
-client = CerberusClient(username, password))
+client = CerberusClient(https://my.cerberus.url, username, password)
+```
+
+To use with IAM role (most common usage)
+```python
+client = CerberusClient(https://my.cerberus.url)
 ```
 
 ## Running Tests
