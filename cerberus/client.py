@@ -21,6 +21,8 @@ class CerberusClient(object):
         if self.username:
             ua = UserAuth(self.cerberus_url, self.username, self.password)
             self.token =  ua.get_token()
+        #if CERBERUS_TOKEN
+        #   self.token = CERBERUS_TOKEN
         else:
             awsa = AWSAuth(self.cerberus_url)
             self.token =  awsa.get_token()
@@ -64,14 +66,19 @@ class CerberusClient(object):
 
 
     def get_secret(self,vault_path,key):
-        """Returs the secret based on the vault_path and key"""
-        secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path,
-                                      headers={'Content-Type' : 'application/json', 'X-Vault-Token': self.token})
-        secret_resp_json = json.loads(secret_resp.text)
-        if secret_resp.status_code != 200:
-          secret_resp.raise_for_status()
+        """Returns the secret based on the vault_path and key"""
+        secret_resp_json = self.get_secret(vault_path)
         if key in secret_resp_json['data']:
           return secret_resp_json['data'][key]
         else:
           print("ERROR: key " + key + " not found")
           sys.exit(2)
+
+    def get_secrets(self,vault_path):
+        """Returns json secrets based on the vault_path"""
+        secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path,
+                                      headers={'Content-Type' : 'application/json', 'X-Vault-Token': self.token})
+        secret_resp_json = json.loads(secret_resp.text)
+        if secret_resp.status_code != 200:
+          secret_resp.raise_for_status()
+        return secret_resp_json

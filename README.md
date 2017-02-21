@@ -38,6 +38,16 @@ To use with IAM role (most common usage)
 client = CerberusClient(https://my.cerberus.url)
 ```
 
+To get a secret for specific keys
+```python
+secret = client.get_secret(path, key)
+```
+
+To get all the secrets for a vault path
+```python
+secrets = client.get_secrets(path)
+```
+
 ## Running Tests
 
 You can run all the unit tests using nosetests. Most of the tests are mocked.
