@@ -1,1 +1,1 @@
-__all__ = ['cerberus_client']
+__all__ = ['client', 'user_auth']

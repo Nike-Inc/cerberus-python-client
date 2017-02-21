@@ -56,56 +56,6 @@ class TestCerberusClient(object):
         assert_equals(token, self.client.token)
 
     @patch('requests.get')
-    def test_get_auth(self, mock_get):
-        # mock return response
-        mock_resp = self._mock_response(text=self.auth_resp)
-        mock_get.return_value = mock_resp
-        response = self.client.get_auth()
-
-        # confirm response matches the mock
-        assert_dict_equal(response, json.loads(self.auth_resp))
-
-    @raises(HTTPError)
-    @patch('requests.get')
-    def test_when_not_200_status_code(self, mock_get):
-        mock_resp = self._mock_response(status=404, raise_for_status=HTTPError("google is down"))
-        mock_get.return_value = mock_resp
-        self.client.get_auth()
-
-    @patch('builtins.input', return_value='0987654321')
-    @patch('requests.post')
-    def test_mfa_response(self,mock_post,mock_input):
-        mfa_data =""" {
-                      "status" : "success",
-                      "data" : {
-                        "user_id" : "134",
-                        "username" : "unicorn@rainbow.com",
-                        "state_token" : null,
-                        "devices" : [ ],
-                        "client_token" : {
-                          "client_token" : "61e3-f3f-6536-a3e6-b498161d",
-                          "policies" : [ "cloud-events-owner", "pixie-dust-owner"],
-                          "metadata" : {
-                            "groups" : "Rainbow.Playgroun.User,CareBear.users",
-                            "is_admin" : "false",
-                            "username" : "unicorn@rainbow.com"
-                          },
-                          "lease_duration" : 3600,
-                          "renewable" : true
-                        }
-                      }
-                    }"""
-        # mock all the things
-        mock_post.return_value = Mock()
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.text = mfa_data
-
-        response = self.client.get_mfa(json.loads(self.auth_resp))
-
-        # confirm the json matches
-        assert_dict_equal(response, json.loads(mfa_data))
-
-    @patch('requests.get')
     def test_get_sdb_id(self,mock_get):
         sdb_data = """[{
                  "id" : "5f0-99-414-bc-e5909c",
