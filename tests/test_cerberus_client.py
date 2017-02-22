@@ -10,7 +10,8 @@ from requests.exceptions import HTTPError
 from cerberus.client import CerberusClient
 
 class TestCerberusClient(object):
-
+    """Class to test the cerberus client. Mock is used to
+       mock external calls"""
     @classmethod
     @patch('cerberus.client.CerberusClient.set_token', return_value='1234-asdf-1234hy-qwer6')
     def setup_class(self, mock_token):

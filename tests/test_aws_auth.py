@@ -1,11 +1,11 @@
 # Stuff for tests...
 from unittest.mock import Mock, patch
-from nose.tools import raises, assert_equals, assert_dict_equal
+from nose.tools import assert_equals
 
 # other stuff
 import json
 import boto3
-from requests.exceptions import HTTPError
+from moto import mock_kms
 
 # Local imports...
 from cerberus.aws_auth import AWSAuth
@@ -18,6 +18,10 @@ class TestAWSAuth(object):
         self.client = AWSAuth("https://cerberus.fake.com")
 
 
+    @mock_kms
     @patch('requests.post')
     def test_get_token(self,mock_post):
         """unit test for get token"""
+        client = boto3.client('kms', region_name='us-west-2')
+        response = client.decrypt('ZW5jcnlwdG1l'.encode('utf-8'))
+        response['Plaintext'].should.equal('encryptme')

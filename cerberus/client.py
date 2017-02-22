@@ -7,9 +7,14 @@ from .user_auth import UserAuth
 from .aws_auth import AWSAuth
 
 class CerberusClient(object):
+    """ Cerberus Python Client for interacting with
+        Cerberus APIs and Vault. Authentication is done
+        via the Auth Classes"""
     HEADERS = {"Content-Type": "application/json"}
 
     def __init__(self, cerberus_url, username=None, password=None):
+        """username and password are optional, they are not neeeded
+           for IAM Role Auth"""
         self.cerberus_url = cerberus_url
         self.username = username or ""
         self.password = password or ""
@@ -17,7 +22,7 @@ class CerberusClient(object):
         self.set_token()
 
     def set_token(self):
-        """set the token based on auth type"""
+        """Set the Valut token based on auth type"""
         if self.username:
             ua = UserAuth(self.cerberus_url, self.username, self.password)
             self.token =  ua.get_token()
