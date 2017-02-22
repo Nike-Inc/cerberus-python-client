@@ -11,16 +11,10 @@ To learn more about Cerberus, please visit the [Cerberus website](http://enginee
 ## Installation
 This is a Python 3 project.
 
-Install the python required packages:
+Install the cerberus python client and required python packages:
 ```bash
-  $ pip3 install -r requirements.txt
+python3 setup.py install
 ```
-
-Install the client:
-```bash
-pip3 install https://github.com/Nike-Inc/cerberus-python-client.git
-```
-
 
 ## Usage
 
@@ -29,17 +23,17 @@ from cerberus.client import CerberusClient
 ```
 This client supports 2 different types of authentication, both of which returns a Vault Token.
 
-* username and password (CLI usage)
+1. username and password (CLI usage)
 ```python
 client = CerberusClient(https://my.cerberus.url, username, password)
 ```
 
-* EC2 IAM role (default mode)
+2. EC2 IAM role (default mode)
 ```python
 client = CerberusClient(https://my.cerberus.url)
 ```
 
-To get a secret for specific keys
+To get a secret for a specific key
 ```python
 secret = client.get_secret(path, key)
 ```
@@ -47,6 +41,21 @@ secret = client.get_secret(path, key)
 To get all the secrets for a vault path
 ```python
 secrets = client.get_secrets(path)
+```
+
+If you simply want to get a token you can use the Auth classes.
+You can also use the CerberusClient class.
+
+1. username and password
+```python
+from cerberus.user_auth import UserAuth
+token = UserAuth('https://my.cerberus.url', 'username', 'password').get_token()'
+```
+
+2. EC2 IAM role
+```python
+from cerberus.aws_auth import AWSAuth
+token = AWSAuth('https://my.cerberus.url').get_token()
 ```
 
 ## Running Tests
