@@ -23,12 +23,12 @@ from cerberus.client import CerberusClient
 ```
 This client supports 2 different types of authentication, both of which returns a Vault Token.
 
-1. username and password (CLI usage)
+* username and password (CLI usage)
 ```python
 client = CerberusClient(https://my.cerberus.url, username, password)
 ```
 
-1. EC2 IAM role (default mode)
+* EC2 IAM role (default mode)
 ```python
 client = CerberusClient(https://my.cerberus.url)
 ```
@@ -46,13 +46,13 @@ secrets = client.get_secrets(path)
 If you simply want to get a token you can use the Auth classes.
 You can also use the CerberusClient class.
 
-2. username and password
+* username and password
 ```python
 from cerberus.user_auth import UserAuth
 token = UserAuth('https://my.cerberus.url', 'username', 'password').get_token()'
 ```
 
-2. EC2 IAM role
+* EC2 IAM role
 ```python
 from cerberus.aws_auth import AWSAuth
 token = AWSAuth('https://my.cerberus.url').get_token()
