@@ -28,7 +28,7 @@ This client supports 2 different types of authentication, both of which returns 
 client = CerberusClient(https://my.cerberus.url, username, password)
 ```
 
-2. EC2 IAM role (default mode)
+1. EC2 IAM role (default mode)
 ```python
 client = CerberusClient(https://my.cerberus.url)
 ```
@@ -46,7 +46,7 @@ secrets = client.get_secrets(path)
 If you simply want to get a token you can use the Auth classes.
 You can also use the CerberusClient class.
 
-1. username and password
+2. username and password
 ```python
 from cerberus.user_auth import UserAuth
 token = UserAuth('https://my.cerberus.url', 'username', 'password').get_token()'
