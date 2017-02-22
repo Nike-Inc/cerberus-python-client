@@ -41,5 +41,6 @@ class AWSAuth(object):
         response = client.decrypt(
             CiphertextBlob=base64.decodebytes(bytes(auth_data, 'utf-8'))
         )
+        print ("response", response)
         token = json.loads(response['Plaintext'].decode('utf-8'))['client_token']
         return token

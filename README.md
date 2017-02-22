@@ -27,13 +27,14 @@ pip3 install https://github.com/Nike-Inc/cerberus-python-client.git
 ```python
 from cerberus.client import CerberusClient
 ```
+This client supports 2 different types of authentication, both of which returns a Vault Token.
 
-To use with a username and password (CLI usage)
+* username and password (CLI usage)
 ```python
 client = CerberusClient(https://my.cerberus.url, username, password)
 ```
 
-To use with IAM role (most common usage)
+* EC2 IAM role (default mode)
 ```python
 client = CerberusClient(https://my.cerberus.url)
 ```
