@@ -10,7 +10,7 @@ from requests.exceptions import HTTPError
 from cerberus.user_auth import UserAuth
 
 class TestUserAuth(object):
-"""Test class fo user auth. This uses Mock to mock external API calls"""
+    """Test class fo user auth. This uses Mock to mock external API calls"""
     @classmethod
     def setup_class(self):
         self.client = UserAuth(

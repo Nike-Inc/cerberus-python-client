@@ -72,7 +72,7 @@ class CerberusClient(object):
 
     def get_secret(self,vault_path,key):
         """Returns the secret based on the vault_path and key"""
-        secret_resp_json = self.get_secret(vault_path)
+        secret_resp_json = self.get_secrets(vault_path)
         if key in secret_resp_json['data']:
           return secret_resp_json['data'][key]
         else:
