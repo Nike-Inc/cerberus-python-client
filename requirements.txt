@@ -1,5 +1,2 @@
-mock
-nose
 boto3
 requests
-nose

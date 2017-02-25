@@ -1,13 +1,11 @@
 # Stuff for tests...
-from unittest.mock import Mock, patch, MagicMock
-from nose.tools import raises, assert_equals, assert_dict_equal
-
-# other stuff
 import json
-from requests.exceptions import HTTPError
 
-# Local imports...
+from mock import Mock, patch
+from nose.tools import assert_equals
+
 from cerberus.client import CerberusClient
+
 
 class TestCerberusClient(object):
     """Class to test the cerberus client. Mock is used to mock external calls"""
@@ -42,11 +40,10 @@ class TestCerberusClient(object):
         mock_resp.text = text
         # add json data if provided
         if json_data:
-            mock_resp.json = mock.Mock(
+            mock_resp.json = Mock(
                 return_value=json_data
             )
         return mock_resp
-
 
     def test_username(self):
         assert_equals(self.client.username, 'testuser')
@@ -56,7 +53,7 @@ class TestCerberusClient(object):
         assert_equals(token, self.client.token)
 
     @patch('requests.get')
-    def test_get_sdb_id(self,mock_get):
+    def test_get_sdb_id(self, mock_get):
         sdb_data = """[{
                  "id" : "5f0-99-414-bc-e5909c",
                  "name" : "Disco Events",
@@ -72,17 +69,15 @@ class TestCerberusClient(object):
         mock_resp = self._mock_response(text=sdb_data)
         mock_get.return_value = mock_resp
 
-        id = self.client.get_sdb_id("snowflake")
+        sdb_id = self.client.get_sdb_id("snowflake")
         sdb_json = json.loads(sdb_data)
 
         # confirm the id matches
-        assert_equals(id, sdb_json[1]['id'])
+        assert_equals(sdb_id, sdb_json[1]['id'])
 
-
-    @patch('cerberus.client.CerberusClient.get_sdb_id',
-            return_value="5f0-99-414-bc-e5909c")
+    @patch('cerberus.client.CerberusClient.get_sdb_id', return_value="5f0-99-414-bc-e5909c")
     @patch('requests.get')
-    def test_get_sdb_path(self,mock_get,mock_sdb_id):
+    def test_get_sdb_path(self, mock_get, mock_sdb_id):
         sdb_data = """{
                     "id" : "5f0-99-414-bc-e5909c",
                     "name" : "Disco Events",
@@ -97,7 +92,7 @@ class TestCerberusClient(object):
         assert_equals(path, sdb_json['path'])
 
     @patch('requests.get')
-    def test_get_sdb_keys(self,mock_get):
+    def test_get_sdb_keys(self, mock_get):
         list_data = """{
                         "lease_id":"","renewable":false,"lease_duration":0,
                         "data":{"keys":["magic","princess"]},
@@ -111,7 +106,7 @@ class TestCerberusClient(object):
         assert_equals(keys[0], 'magic')
 
     @patch('requests.get')
-    def test_getting_a_secret(self,mock_get):
+    def test_getting_a_secret(self, mock_get):
         secret_data = """{
                         "data":{
                             "mykey": "mysecretdata",
