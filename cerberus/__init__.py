@@ -1,1 +1,1 @@
-__all__ = ['client', 'user_auth']
+__all__ = ['client', 'user_auth', 'aws_auth']

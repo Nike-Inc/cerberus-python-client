@@ -2,3 +2,5 @@
 *.pyo
 __pycache__/
 junk/
+.idea/
+.coverage
