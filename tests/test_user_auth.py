@@ -20,7 +20,8 @@ class TestUserAuth(object):
             "data": {
                 "username": "unicorn@rainbow.com",
                 "state_token": "0127a384d305138d4e",
-                "client_token": "None", "user_id": "1325",
+                "client_token": "None",
+                "user_id": "1325",
                 "devices": [{"id": "223", "name": "Google Authenticator"}]
             }
         }
@@ -41,13 +42,13 @@ class TestUserAuth(object):
     @patch('cerberus.user_auth.UserAuth.get_auth')
     def test_get_token(self, mock_get_auth):
         mock_get_auth.return_value = {
-                                   "status": "success",
-                                   "data": {
-                                       "client_token": {
-                                           "client_token": "7f6808f1-ede3-2177-aa9d-45f507391310",
-                                       }
-                                     }
-                                   }
+           "status": "success",
+           "data": {
+               "client_token": {
+                   "client_token": "7f6808f1-ede3-2177-aa9d-45f507391310",
+               }
+             }
+           }
         token = self.client.get_token()
         assert_equals(token, '7f6808f1-ede3-2177-aa9d-45f507391310')
 
