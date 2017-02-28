@@ -1,4 +1,3 @@
-import json
 import sys
 
 import requests
@@ -13,12 +12,14 @@ class CerberusClient(object):
         via the Auth Classes"""
     HEADERS = {'Content-Type': 'application/json'}
 
-    def __init__(self, cerberus_url, username=None, password=None):
+    def __init__(self, cerberus_url, username=None, password=None, role_arn=None, region=None):
         """Username and password are optional, they are not needed
            for IAM Role Auth"""
         self.cerberus_url = cerberus_url
         self.username = username or ""
         self.password = password or ""
+        self.role_arn = role_arn
+        self.region = region
         self.token = None
         self.set_token()
 
@@ -30,7 +31,7 @@ class CerberusClient(object):
             ua = UserAuth(self.cerberus_url, self.username, self.password)
             self.token = ua.get_token()
         else:
-            awsa = AWSAuth(self.cerberus_url)
+            awsa = AWSAuth(self, role_arn=self.role_arn, region=self.region)
             self.token = awsa.get_token()
 
     def get_token(self):
@@ -40,34 +41,37 @@ class CerberusClient(object):
     def get_sdb_path(self, sdb):
         """Returns the path for a SDB"""
         sdb_id = self.get_sdb_id(sdb)
-        sdb_resp = requests.get(self.cerberus_url + '/v1/safe-deposit-box/' + sdb_id + '/',
-                                headers=self.HEADERS)
-        sdb_resp_json = json.loads(sdb_resp.text)
+        sdb_resp = requests.get(
+            self.cerberus_url + '/v1/safe-deposit-box/' + sdb_id + '/',
+            headers=self.HEADERS
+        )
+
         if sdb_resp.status_code != 200:
             sdb_resp.raise_for_status()
-        path = sdb_resp_json['path']
 
-        return path
+        return sdb_resp.json()['path']
 
     def get_sdb_keys(self, path):
         """Returns the keys for a SDB, which are need for the full vault path"""
-        list_resp = requests.get(self.cerberus_url + '/v1/secret/' + path + '/?list=true',
-                                 headers=self.HEADERS)
-        list_resp_json = json.loads(list_resp.text)
+        list_resp = requests.get(
+            self.cerberus_url + '/v1/secret/' + path + '/?list=true',
+            headers=self.HEADERS
+        )
+
         if list_resp.status_code != 200:
             list_resp.raise_for_status()
 
-        return list_resp_json['data']['keys']
+        return list_resp.json()['data']['keys']
 
     def get_sdb_id(self, sdb):
         """ Return the ID for the given safety deposit box"""
         sdb_resp = requests.get(self.cerberus_url + '/v1/safe-deposit-box',
                                 headers=self.HEADERS)
-        sdb_resp_json = json.loads(sdb_resp.text)
+
         if sdb_resp.status_code != 200:
             sdb_resp.raise_for_status()
 
-        for r in sdb_resp_json:
+        for r in sdb_resp.json():
             if r['name'] == sdb:
                 return str(r['id'])
 
@@ -77,6 +81,7 @@ class CerberusClient(object):
     def get_secret(self, vault_path, key):
         """Returns the secret based on the vault_path and key"""
         secret_resp_json = self.get_secrets(vault_path)
+
         if key in secret_resp_json['data']:
             return secret_resp_json['data'][key]
         else:
@@ -87,8 +92,8 @@ class CerberusClient(object):
         """Returns json secrets based on the vault_path"""
         secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path,
                                    headers=self.HEADERS)
-        secret_resp_json = json.loads(secret_resp.text)
+
         if secret_resp.status_code != 200:
             secret_resp.raise_for_status()
 
-        return secret_resp_json
+        return secret_resp.json()

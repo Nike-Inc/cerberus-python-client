@@ -1,5 +1,3 @@
-import json
-
 import requests
 
 
@@ -16,18 +14,21 @@ class UserAuth(object):
         """Returns auth response which has client token unless MFA is required"""
         auth_resp = requests.get(self.cerberus_url + '/v2/auth/user',
                                  auth=(self.username, self.password))
-        auth_resp_json = json.loads(auth_resp.text)
+
         if auth_resp.status_code != 200:
-           auth_resp.raise_for_status()
-        return auth_resp_json
+            auth_resp.raise_for_status()
+
+        return auth_resp.json()
 
     def get_token(self):
         """sets client token from Cerberus"""
         auth_resp = self.get_auth()
+
         if auth_resp['status'] == 'mfa_req':
             token_resp = self.get_mfa(auth_resp)
         else:
             token_resp = auth_resp
+
         token = token_resp['data']['client_token']['client_token']
         return token
 
@@ -36,12 +37,16 @@ class UserAuth(object):
         # TODO check if there is more than 1 device.
         # Currently cerberus only support Google Authenticator
         sec_code = input('Enter ' + auth_resp['data']['devices'][0]['name'] + ' security code: ')
-        mfa_resp = requests.post(self.cerberus_url + '/v2/auth/mfa_check',
-                                 json={'otp_token': sec_code,
-                                       'device_id': auth_resp['data']['devices'][0]['id'],
-                                       'state_token': auth_resp['data']['state_token']},
-                                 headers=self.HEADERS)
-        mfa_resp_json = json.loads(mfa_resp.text)
+
+        mfa_resp = requests.post(
+            self.cerberus_url + '/v2/auth/mfa_check',
+            json={'otp_token': sec_code,
+                  'device_id': auth_resp['data']['devices'][0]['id'],
+                  'state_token': auth_resp['data']['state_token']},
+            headers=self.HEADERS
+        )
+
         if mfa_resp.status_code != 200:
             mfa_resp.raise_for_status()
-        return mfa_resp_json
+
+        return mfa_resp.json()
