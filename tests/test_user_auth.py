@@ -27,13 +27,13 @@ class TestUserAuth(object):
         }
 
     @staticmethod
-    def _mock_response(status=200, reason=None, content=None):
+    def _mock_response(status=200, reason=None, content=''):
         mock_resp = requests.Response()
         mock_resp.status_code = status
         # Reason the status code occurred.
         mock_resp.reason = reason
         # Raw content in byte
-        mock_resp._content = bytes(content)
+        mock_resp._content = bytes(content.encode('utf-8'))
         return mock_resp
 
     def test_username(self):
