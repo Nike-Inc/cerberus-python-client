@@ -2,4 +2,4 @@
 mock
 nose
 coverage
-moto
+git+git://github.com/spulec/moto.git@5324638573e18e51b895b39ec0d32ac2133a37d0#egg=moto
