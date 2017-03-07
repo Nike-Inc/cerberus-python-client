@@ -1,19 +1,36 @@
+"""
+Copyright 2016-present Nike, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+You may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and* limitations under the License.*
+"""
+
 # Stuff for tests...
 import json
 import sys
 
 import requests
+from requests.exceptions import HTTPError
 from mock import patch
 from nose.tools import raises, assert_equals, assert_dict_equal
-from requests.exceptions import HTTPError
 
 from cerberus.user_auth import UserAuth
 
 
 class TestUserAuth(object):
     """Test class fo user auth. This uses Mock to mock external API calls"""
+
     @classmethod
     def setup_class(cls):
+        """ set-up class """
         cls.client = UserAuth("https://cerberus.fake.com", 'testuser', 'hardtoguesspasswd')
         cls.auth_resp = {
             "status": "mfa_req",
@@ -37,23 +54,26 @@ class TestUserAuth(object):
         return mock_resp
 
     def test_username(self):
+        """ Testing to make sure username match """
         assert_equals(self.client.username, 'testuser')
 
     @patch('cerberus.user_auth.UserAuth.get_auth')
     def test_get_token(self, mock_get_auth):
+        """ Test to make sure the correct token is returned """
         mock_get_auth.return_value = {
-           "status": "success",
-           "data": {
-               "client_token": {
-                   "client_token": "7f6808f1-ede3-2177-aa9d-45f507391310",
-               }
-             }
-           }
+            "status": "success",
+            "data": {
+                "client_token": {
+                    "client_token": "7f6808f1-ede3-2177-aa9d-45f507391310",
+                }
+            }
+        }
         token = self.client.get_token()
         assert_equals(token, '7f6808f1-ede3-2177-aa9d-45f507391310')
 
     @patch('requests.get')
     def test_get_auth(self, mock_get):
+        """" Test that correct response is returned by get_auth """
         # mock return response
         mock_resp = self._mock_response(content=json.dumps(self.auth_resp))
         mock_get.return_value = mock_resp
@@ -70,6 +90,7 @@ class TestUserAuth(object):
     @patch(input_module, return_value='0987654321')
     @patch('requests.post')
     def test_mfa_response(self, mock_post, mock_input=None):
+        """ Testing that mfa_response returns the correct json """
         mfa_data = {
             "status": "success",
             "data": {
@@ -102,6 +123,7 @@ class TestUserAuth(object):
     @raises(HTTPError)
     @patch('requests.get')
     def test_when_not_200_status_code(self, mock_get):
+        """ test when 200 status code is not returned"""
         mock_resp = self._mock_response(status=404, reason='Not Found')
         mock_get.return_value = mock_resp
         self.client.get_auth()

@@ -1,3 +1,18 @@
+"""
+Copyright 2016-present Nike, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+You may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and* limitations under the License.*
+"""
+
 import requests
 
 
@@ -34,8 +49,6 @@ class UserAuth(object):
 
     def get_mfa(self, auth_resp):
         """Gets MFA code from user and returns response which includes the client token"""
-        # TODO check if there is more than 1 device.
-        # Currently cerberus only support Google Authenticator
         sec_code = input('Enter ' + auth_resp['data']['devices'][0]['name'] + ' security code: ')
 
         mfa_resp = requests.post(

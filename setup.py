@@ -5,7 +5,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='cerberus python client',
-    version='0.1.0',
+    version='0.1.1',
     install_requires=requirements,
     author='Ann Wallace',
     author_email='ann.wallace@nike.com',

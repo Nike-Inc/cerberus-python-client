@@ -1,3 +1,18 @@
+"""
+Copyright 2016-present Nike, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+You may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and* limitations under the License.*
+"""
+
 # Stuff for tests...
 import json
 import unittest
@@ -13,7 +28,7 @@ class TestCerberusClient(unittest.TestCase):
     """Class to test the cerberus client. Mock is used to mock external calls"""
     @patch('cerberus.client.CerberusClient.set_token', return_value='1234-asdf-1234hy-qwer6')
     def setUp(self, *args):
-        self.client = CerberusClient("https://cerberus.fake.com", 'testuser', 'hardtoguesspasswd' )
+        self.client = CerberusClient("https://cerberus.fake.com", 'testuser', 'hardtoguesspasswd')
         self.auth_resp = {
             "status": "mfa_req",
             "data": {
@@ -35,14 +50,17 @@ class TestCerberusClient(unittest.TestCase):
         return mock_resp
 
     def test_username(self):
+        """ Testing that correct username is returned"""
         assert_equals(self.client.username, 'testuser')
 
     def test_get_token(self):
+        """ Testing that get_token returns the correct token"""
         token = self.client.get_token()
         assert_equals(token, self.client.token)
 
     @patch('requests.get')
     def test_get_sdb_id(self, mock_get):
+        """ Testing that get_sdb_id returns the correct ID"""
         sdb_data = [
             {
                 "id": "5f0-99-414-bc-e5909c",
@@ -67,6 +85,7 @@ class TestCerberusClient(unittest.TestCase):
     @patch('cerberus.client.CerberusClient.get_sdb_id', return_value="5f0-99-414-bc-e5909c")
     @patch('requests.get')
     def test_get_sdb_path(self, mock_get, mock_sdb_id):
+        """ Test that get_sdb_path returns the correct path """
         sdb_data = {
             "id": "5f0-99-414-bc-e5909c",
             "name": "Disco Events",
@@ -83,6 +102,7 @@ class TestCerberusClient(unittest.TestCase):
 
     @patch('requests.get')
     def test_get_sdb_keys(self, mock_get):
+        """ Testing that get_sdb_keys returns the correct key """
         list_data = {
             "lease_id": "",
             "renewable": False,
@@ -103,6 +123,7 @@ class TestCerberusClient(unittest.TestCase):
 
     @patch('requests.get')
     def test_getting_a_secret(self, mock_get):
+        """ Testing the correct secret is returned"""
         secret_data = {
             "data": {
                 "mykey": "mysecretdata",
