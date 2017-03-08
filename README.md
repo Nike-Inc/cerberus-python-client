@@ -9,11 +9,17 @@ pull request to implement write operations)
 To learn more about Cerberus, please visit the [Cerberus website](http://engineering.nike.com/cerberus/).
 
 ## Installation
-This is a Python 3 project.
+This is a Python 3 project but should be compatible with python 2.7.
 
 Install the cerberus python client and required python packages:
 ```bash
 python3 setup.py install
+or
+python setup.py install
+```
+Or simply use pip(3)
+```bash
+pip(3) install cerberus-python-client
 ```
 
 ## Usage
