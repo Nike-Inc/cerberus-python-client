@@ -14,12 +14,15 @@ This is a Python 3 project but should be compatible with python 2.7.
 Install the cerberus python client and required python packages:
 ```bash
 python3 setup.py install
-or
+```
+or for python 2.7
+```bash
 python setup.py install
 ```
-Or simply use pip(3)
+
+Or simply use pip or pip3
 ```bash
-pip(3) install cerberus-python-client
+pip3 install cerberus-python-client
 ```
 
 ## Usage
