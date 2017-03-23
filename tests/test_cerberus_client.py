@@ -21,6 +21,7 @@ import requests
 from mock import patch
 from nose.tools import assert_equals
 
+from cerberus import CerberusClientException
 from cerberus.client import CerberusClient
 
 
@@ -138,3 +139,40 @@ class TestCerberusClient(unittest.TestCase):
 
         # check to make sure we got the right secret
         assert_equals(secret, 'moretopsecretstuff')
+
+    @patch('requests.get')
+    def test_get_secrets_invalid_path(self, mget):
+        """ Ensure that a Cerberus exception is raised if the path is invalid. """
+        mget.return_value = self._mock_response(status=401)
+        with self.assertRaises(CerberusClientException):
+            self.client.get_secrets('this/path/does/not/exist')
+
+    @patch('requests.get')
+    def test_get_secret_invalid_path(self, mget):
+        """ Ensure that a Cerberus exception is raised if the path or key is invalid. """
+        data = json.dumps({"data": {}})
+        mget.return_value = self._mock_response(content=data)
+        with self.assertRaises(CerberusClientException):
+            self.client.get_secret('this/path/does/not/exist', 'null')
+
+    @patch('requests.get')
+    def test_get_sdb_id_invalid_response(self, mget):
+        """ Ensure a Cerberus exception is raised if the sdb request failed. """
+        mget.return_value = self._mock_response(status=401)
+        with self.assertRaises(CerberusClientException):
+            self.client.get_sdb_id('some_id')
+
+    @patch('requests.get')
+    def test_get_sdb_id_missing_id(self, mget):
+        """ Ensure a Cerberus exception is raised if the sdb id is not found. """
+        data = [
+            {
+                "id": "5f0-99-414-bc-e5909c",
+                "name": "Disco Events",
+                "path": "app/disco-events/",
+                "category_id": "b07-42d0-e6-9-0a47c03"
+            }
+        ]
+        mget.return_value = self._mock_response(content=json.dumps(data))
+        with self.assertRaises(CerberusClientException):
+            self.client.get_sdb_id('not_found')
