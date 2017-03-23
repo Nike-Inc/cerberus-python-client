@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and* limitations
 """
 
 # Stuff for tests...
+import base64
 import json
 import unittest
 
