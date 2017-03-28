@@ -13,12 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and* limitations under the License.*
 """
 
-import sys
-
 import requests
+from requests.exceptions import RequestException
 
 from .aws_auth import AWSAuth
 from .user_auth import UserAuth
+from . import CerberusClientException
 
 
 class CerberusClient(object):
@@ -61,8 +61,7 @@ class CerberusClient(object):
             headers=self.HEADERS
         )
 
-        if sdb_resp.status_code != 200:
-            sdb_resp.raise_for_status()
+        self.throw_if_bad_response(sdb_resp)
 
         return sdb_resp.json()['path']
 
@@ -73,8 +72,7 @@ class CerberusClient(object):
             headers=self.HEADERS
         )
 
-        if list_resp.status_code != 200:
-            list_resp.raise_for_status()
+        self.throw_if_bad_response(list_resp)
 
         return list_resp.json()['data']['keys']
 
@@ -83,15 +81,15 @@ class CerberusClient(object):
         sdb_resp = requests.get(self.cerberus_url + '/v1/safe-deposit-box',
                                 headers=self.HEADERS)
 
-        if sdb_resp.status_code != 200:
-            sdb_resp.raise_for_status()
+        self.throw_if_bad_response(sdb_resp)
 
         for r in sdb_resp.json():
             if r['name'] == sdb:
                 return str(r['id'])
 
-        print("ERROR: " + sdb + " not found")
-        sys.exit(2)
+        # If we haven't returned yet then we didn't find what we were
+        # looking for.
+        raise CerberusClientException("'%s' not found" % sdb)
 
     def get_secret(self, vault_path, key):
         """Returns the secret based on the vault_path and key"""
@@ -100,15 +98,20 @@ class CerberusClient(object):
         if key in secret_resp_json['data']:
             return secret_resp_json['data'][key]
         else:
-            print("ERROR: key " + key + " not found")
-            sys.exit(2)
+            raise CerberusClientException("Key '%s' not found" % key)
 
     def get_secrets(self, vault_path):
         """Returns json secrets based on the vault_path"""
         secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path,
                                    headers=self.HEADERS)
 
-        if secret_resp.status_code != 200:
-            secret_resp.raise_for_status()
+        self.throw_if_bad_response(secret_resp)
 
         return secret_resp.json()
+
+    def throw_if_bad_response(self, response):
+        """Throw an exception if the Cerberus response is not successful."""
+        try:
+            response.raise_for_status()
+        except RequestException as e:
+            raise CerberusClientException(e.message)
