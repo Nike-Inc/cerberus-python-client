@@ -61,7 +61,7 @@ class TestAWSAuth(unittest.TestCase):
             "renewable": True
         }
 
-        client = boto3.client('kms')
+        client = boto3.client('kms', 'us-west-2')
         key_data = client.create_key()
         key_id = key_data['KeyMetadata']['KeyId']
 
@@ -72,7 +72,7 @@ class TestAWSAuth(unittest.TestCase):
         )
 
         # Test the AWSAuth client leveraging default role ARN and region detection...
-        auth_client = AWSAuth("https://cerberus.fake.com")
+        auth_client = AWSAuth("https://cerberus.fake.com", region='us-east-1')
         token = auth_client.get_token()
         self.assertEqual(token, response_body['client_token'])
 
