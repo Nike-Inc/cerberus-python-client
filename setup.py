@@ -1,12 +1,13 @@
 from setuptools import setup, find_packages
 
-with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
-
 setup(
     name='cerberus-python-client',
-    version='0.2.1',
-    install_requires=requirements,
+    version='0.2.2',
+    install_requires=[
+        'moto',
+        'boto3',
+        'requests',
+    ],
     author='Ann Wallace',
     author_email='ann.wallace@nike.com',
     description="A python client for interacting with Cerberus and Vault",

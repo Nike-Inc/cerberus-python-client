@@ -1,3 +1,0 @@
-moto
-boto3
-requests
