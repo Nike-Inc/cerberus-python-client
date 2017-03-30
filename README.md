@@ -1,5 +1,8 @@
 # Cerberus Python Client
 
+[![][travis img]][travis]
+[![][license img]][license]
+
 This is a Python based client library for communicating with Cerberus and Vault via HTTPS and enables authentication schemes specific
 to AWS and Cerberus.
 

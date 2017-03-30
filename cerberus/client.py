@@ -114,4 +114,4 @@ class CerberusClient(object):
         try:
             response.raise_for_status()
         except RequestException as e:
-            raise CerberusClientException(e.message)
+            raise CerberusClientException(str(e))
