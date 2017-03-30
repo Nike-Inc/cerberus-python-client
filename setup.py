@@ -4,8 +4,8 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(
-    name='cerberus python client',
-    version='0.1.2',
+    name='cerberus-python-client',
+    version='0.2.1',
     install_requires=requirements,
     author='Ann Wallace',
     author_email='ann.wallace@nike.com',
