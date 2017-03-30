@@ -83,6 +83,7 @@ class TestAWSAuth(unittest.TestCase):
         auth_client = AWSAuth(
             "https://cerberus.fake.com",
             "arn:aws:iam::" + test_account + ":role/" + test_role,
+            "us-east-1"
         )
         self.assertEqual(auth_client.account_id, test_account)
         self.assertEqual(auth_client.role_name, test_role)
