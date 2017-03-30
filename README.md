@@ -2,6 +2,7 @@
 
 [![][travis img]][travis]
 [![][license img]][license]
+[![PyPI version](https://badge.fury.io/py/cerberus-python-client.svg)](https://badge.fury.io/py/cerberus-python-client)
 
 This is a Python based client library for communicating with Cerberus and Vault via HTTPS and enables authentication schemes specific
 to AWS and Cerberus.
