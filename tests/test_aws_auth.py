@@ -61,7 +61,7 @@ class TestAWSAuth(unittest.TestCase):
             "renewable": True
         }
 
-        client = boto3.client('kms')
+        client = boto3.client('kms', region_name='us-west-2')
         key_data = client.create_key()
         key_id = key_data['KeyMetadata']['KeyId']
 
@@ -83,7 +83,6 @@ class TestAWSAuth(unittest.TestCase):
         auth_client = AWSAuth(
             "https://cerberus.fake.com",
             "arn:aws:iam::" + test_account + ":role/" + test_role,
-            "us-east-1"
         )
         self.assertEqual(auth_client.account_id, test_account)
         self.assertEqual(auth_client.role_name, test_role)
