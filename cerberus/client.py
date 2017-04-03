@@ -46,7 +46,7 @@ class CerberusClient(object):
             ua = UserAuth(self.cerberus_url, self.username, self.password)
             self.token = ua.get_token()
         else:
-            awsa = AWSAuth(self, role_arn=self.role_arn, region=self.region)
+            awsa = AWSAuth(self.cerberus_url, role_arn=self.role_arn, region=self.region)
             self.token = awsa.get_token()
 
     def get_token(self):
