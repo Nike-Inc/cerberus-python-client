@@ -41,7 +41,30 @@ This client supports 2 different types of authentication, both of which returns 
 client = CerberusClient('https://my.cerberus.url', username, password)
 ```
 
-* EC2 IAM role (default mode)
+* EC2 IAM role or Lambda(default mode)
+
+#### Prerequisites for Lambda
+
+The IAM role assigned to the Lambda function must contain the following policy statement in addition to the above KMS decrypt policy, this is so the Lambda can look up its metadata to automatically authenticate with the Cerberus IAM auth endpoint:
+
+```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "AllowGetRole",
+        "Effect": "Allow",
+        "Action": [
+          "iam:GetRole"
+        ],
+        "Resource": [
+          "*"
+        ]
+      }
+    ]
+  }
+
+
 ```python
 client = CerberusClient('https://my.cerberus.url')
 ```
