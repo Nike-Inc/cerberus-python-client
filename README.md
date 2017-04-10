@@ -38,12 +38,12 @@ This client supports 2 different types of authentication, both of which returns 
 
 * username and password (CLI usage)
 ```python
-client = CerberusClient(https://my.cerberus.url, username, password)
+client = CerberusClient('https://my.cerberus.url', username, password)
 ```
 
 * EC2 IAM role (default mode)
 ```python
-client = CerberusClient(https://my.cerberus.url)
+client = CerberusClient('https://my.cerberus.url')
 ```
 
 To get a secret for a specific key
