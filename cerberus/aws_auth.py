@@ -43,17 +43,61 @@ class AWSAuth(object):
 
         if role_arn_match is None:
             self.account_id = client.get_caller_identity().get('Account')
-            self.role_name = client.get_caller_identity().get('Arn').split('/')[1]
+            self.role_name = self.get_role_name()
         else:
             self.account_id = role_arn_match.group(1)
             self.role_name = role_arn_match.group(2)
             self.assume_role = True
 
         if region is None:
-            session = boto3.session.Session()
-            self.region = session.region_name
+            self.region = self.get_region()
         else:
             self.region = region
+
+    def get_role_name(self):
+        """Returns role name from either ec2 or lambda"""
+        try:
+            # This is an EC2 instance, get the role name from the metadata service
+            role_arn = requests.get('http://169.254.169.254/latest/meta-data/iam/info').json()['InstanceProfileArn']
+            role_arn_match = re.match(r'arn:aws:iam::.*?:(?:role|instance-profile)/(.*)', role_arn)
+            return role_arn_match.group(1)
+        except:
+            pass
+
+        try:
+            # This is a Lambda, iam:GetRole is needed for this to work
+            iam_client = boto3.client('iam')
+            sts_client = boto3.client('sts')
+            current_identity = sts_client.get_caller_identity()
+            role_name = str(current_identity['Arn']).split('/')[-2]
+            response = iam_client.get_role(RoleName=role_name)
+            role_arn = response['Role']['Arn']
+            role_arn_match = re.match(r'arn:aws:iam::.*?:(?:role|instance-profile)/(.*)', role_arn)
+            return role_arn_match.group(1)
+        except:
+            pass
+
+        return False
+
+    def get_region(self):
+        """Returns region from either ec2 or lambda"""
+        try:
+            # This is an EC2 instnace, get the region from the metadata service
+            region = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document').json()['region']
+            return region
+        except:
+            pass
+
+        try:
+            # This is a Lambda, get the region from the session
+            session = boto3.session.Session()
+            return session.region_name
+        except:
+            pass
+
+        return False
+
+
 
     def get_token(self):
         """Returns a client token from Cerberus"""
