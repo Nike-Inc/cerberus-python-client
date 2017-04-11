@@ -63,7 +63,7 @@ The IAM role assigned to the Lambda function must contain the following policy s
       }
     ]
   }
-
+```
 
 ```python
 client = CerberusClient('https://my.cerberus.url')
