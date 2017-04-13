@@ -9,8 +9,8 @@ install:
 script:
 - nosetests --verbosity=2 tests/
 - after_success
-- test "${TRAVIS_PULL_REQUEST}" == "false" && test "${TRAVIS_TAG}" != "" && python3
-  setup.py sdist && python3 setup.py bdist_wheel --universal && twine -u ${USERNAME}
+- test "${TRAVIS_PULL_REQUEST}" == "false" && test "${TRAVIS_TAG}" != "" && python
+  setup.py sdist && python setup.py bdist_wheel --universal && twine -u ${USERNAME}
   -p ${PASSWORD} -r https://pypi.python.org/pypi register dist/*.whl && twine upload
   -u ${USERNAME} -p ${PASSWORD} -r https://pypi.python.org/pypi  dist/*.tar.gz
 env:
