@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='cerberus-python-client',
-    version='0.3',
+    version='0.3.1',
     install_requires=[
         'moto',
         'boto3',
