@@ -7,8 +7,6 @@ install:
 - python setup.py install
 script:
 - nosetests --verbosity=2 tests/
-- after_success 
-- test "${TRAVIS_PULL_REQUEST}" == "false" && test "${TRAVIS_TAG}" != "" && python3 setup.py sdist && python3 setup.py bdist_wheel --universal && twine -u ${USERNAME} -p ${PASSWORD} -r https://pypi.python.org/pypi register dist/*.whl && twine upload -u ${USERNAME} -p ${PASSWORD} -r https://pypi.python.org/pypi  dist/*.tar.gz
 env:
   global:
   - secure: bYBWuv+WDN9EXlIHB7LR8rPbc3NaDRULWpSiuGkUBRE5rTH54xKfVkGQ/za2AQYjN/IFHF3+dLzoz/TDyFdAk4oGdqynIOBnh05nzwQWGX+fHie6x5gWDUg6MGoo1LUelhuld5qTaqtfirMkamwIq3LEXUtMuaxXdN458TPwooCOQ8vtc0iRRLvV/4xgOVb69RaT6i/GQdECj4X35JVt9o6eE70chCnWPYCXw72uvrAeL06GfTBxcIyle+DsgYaCbvCWwl7f3E94kDkAtMSS4ntp66T/yQ6pOQz0Fd39NO+Y/DlYA26yEphgNapfCQV0OhNRJUNLjWvJsy3xMehLUzfM9GxN4Ij6xpRKw3vHCfOxmX8Q4ylma0UghlmvSuo67W1wV5AaMzxAjMpL+nBDPiCVaJWjKCsoQwptq8wtLP5LprhGolTLEFZSPYQxobyxQjj3cQPAY+aA8mxyBBscahe21uGhKE/Aut7+eygar3v5KK09+H1Dsz18iGvzSBEwDrVLqpWQiv9gJD8079BZDSIijQJn0m/xUpiJQcnG5W53Xt4FGMeOzE4CqF2FajxbbXsVRM3DNLeCz583nAr+L8dqu4eCq0WDvGUPifVlpohS7VSrzCdB3acZlxE7jfDZA6JBMTa/km1KjRdUbeW1M6SXlbDAO9NOU7EcC6s2gqs=
