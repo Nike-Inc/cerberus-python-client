@@ -9,10 +9,7 @@ install:
 script:
 - nosetests --verbosity=2 tests/
 - after_success
-- test "${TRAVIS_PULL_REQUEST}" == "false" && test "${TRAVIS_TAG}" != "" && python
-  setup.py sdist && python setup.py bdist_wheel --universal && twine -u ${USERNAME}
-  -p ${PASSWORD} -r https://pypi.python.org/pypi register dist/*.whl && twine upload
-  -u ${USERNAME} -p ${PASSWORD} -r https://pypi.python.org/pypi  dist/*.tar.gz
+- test "${TRAVIS_PULL_REQUEST}" == "false" && test "${TRAVIS_TAG}" != "" && python setup.py sdist && python setup.py bdist_wheel --universal 
 env:
   global:
   - secure: m5I6qo1H7E+CxF98uJuBgje80BuRvG5cX6Q02Ykfu9vGWGYaGQqPplIsq6uLjVa18SExqAm+hUX5xuL/8xIvINZ+0UTtkrNEq4KByCJ1OmuNr/A1Wiv2GlxLGZmenQpomqlnYT5bBw/tnDw/a/F3W5w7cg9TGbK6WUfgWoe4cqiustaL8gniocyS9vmojVEUAdyDKwx/Fd31ttOVl0G8nIOdjyLsr/N85CsDhjaLAJjNiAAAd+K9Y7bNlhAJsxAD1fuNlb2mbbXhjLG832LNXBLv/Mm7PKAf/BMfF8GQdXXjHwfA8iSmS10SHT3TbIHYIGcT4/8OJBb1DcTMB/e3uHusX4Ou0zlxKDXPwKuJjqzdXtlx2i5aG+LLAJGXuP1xoo+Rh7TUl7ml+8wTKkqgFdjwl3DdKx3aHY2beLPPe3B01ypcCFxilRC8uYIdYFNEMTApybWJJGi/RC8XzH4Iu72r5Sr9p1OxPAoaEZv9KDV5RyAGmVrg32O47CYuPARsZarSDwweTuMXY6WegDmculDfsw1kRZ+IqhGtCshJRzT6I04MUN5Xx6kzxaz1Ho9D/ItGTDwNyzLLaE6CcLgZeF06FVgnBaVMv6fEds02b/9qnfG3QYBAf2hwHtdE8C8LhQulTu4wjMMYzSDkM3zSv10L82wkz0L1SsIEsUWJRAY=
