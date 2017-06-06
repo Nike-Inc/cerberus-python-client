@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
+from cerberus import CLIENT_VERSION
 
 setup(
     name='cerberus-python-client',
-    version='0.3.1',
+    version=CLIENT_VERSION,
     install_requires=[
         'moto',
         'boto3',

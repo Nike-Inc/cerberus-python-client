@@ -19,7 +19,7 @@ import unittest
 
 import requests
 from mock import patch
-from nose.tools import assert_equals
+from nose.tools import assert_equals, assert_in
 
 from cerberus import CerberusClientException
 from cerberus.client import CerberusClient
@@ -29,7 +29,11 @@ class TestCerberusClient(unittest.TestCase):
     """Class to test the cerberus client. Mock is used to mock external calls"""
     @patch('cerberus.client.CerberusClient.set_token', return_value='1234-asdf-1234hy-qwer6')
     def setUp(self, *args):
-        self.client = CerberusClient("https://cerberus.fake.com", 'testuser', 'hardtoguesspasswd')
+        self.cerberus_url = "https://cerberus.fake.com"
+        self.client = CerberusClient(
+            self.cerberus_url,
+            'testuser', 'hardtoguesspasswd'
+        )
         self.auth_resp = {
             "status": "mfa_req",
             "data": {
@@ -82,6 +86,11 @@ class TestCerberusClient(unittest.TestCase):
 
         # confirm the id matches
         assert_equals(sdb_id, sdb_data[1]['id'])
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/safe-deposit-box',
+            headers=self.client.HEADERS
+        )
 
     @patch('cerberus.client.CerberusClient.get_sdb_id', return_value="5f0-99-414-bc-e5909c")
     @patch('requests.get')
@@ -100,6 +109,11 @@ class TestCerberusClient(unittest.TestCase):
         path = self.client.get_sdb_path("Disco Events")
 
         assert_equals(path, sdb_data['path'])
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/safe-deposit-box/5f0-99-414-bc-e5909c/',
+            headers=self.client.HEADERS
+        )
 
     @patch('requests.get')
     def test_get_sdb_keys(self, mock_get):
@@ -121,6 +135,11 @@ class TestCerberusClient(unittest.TestCase):
 
         assert_equals(keys[0], 'magic')
         assert_equals(keys[1], 'princess')
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/secret/fake/path/?list=true',
+            headers=self.client.HEADERS
+        )
 
     @patch('requests.get')
     def test_getting_a_secret(self, mock_get):
@@ -139,6 +158,11 @@ class TestCerberusClient(unittest.TestCase):
 
         # check to make sure we got the right secret
         assert_equals(secret, 'moretopsecretstuff')
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/secret/fake/path',
+            headers=self.client.HEADERS
+        )
 
     @patch('requests.get')
     def test_get_secrets_invalid_path(self, mget):

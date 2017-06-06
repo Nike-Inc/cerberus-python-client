@@ -18,7 +18,7 @@ from requests.exceptions import RequestException
 
 from .aws_auth import AWSAuth
 from .user_auth import UserAuth
-from . import CerberusClientException
+from . import CerberusClientException, CLIENT_VERSION
 
 
 class CerberusClient(object):
@@ -39,6 +39,8 @@ class CerberusClient(object):
         self.set_token()
 
         self.HEADERS['X-Vault-Token'] = self.token
+        self.HEADERS['X-Cerberus-Client'] = 'CerberusPythonClient/' \
+                                                + CLIENT_VERSION
 
     def set_token(self):
         """Set the Vault token based on auth type"""
