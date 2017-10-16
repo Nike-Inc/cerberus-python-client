@@ -20,12 +20,10 @@ import re
 import boto3
 import requests
 
-
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
     cerberus_url = None
-    account_id = None
-    role_name = None
+    role_arn = None
     region = None
     assume_role = False
 
@@ -35,18 +33,16 @@ class AWSAuth(object):
 
     def set_auth(self, role_arn=None, region=None):
         """Sets the variables needed for AWS Auth"""
-        client = boto3.client('sts')
+        sts_client = boto3.client('sts')
 
-        role_arn_match = None
-        if role_arn is not None:
-            role_arn_match = re.match(r'arn:aws:iam::(.*?):(?:role|instance-profile)/(.*)', role_arn)
-
-        if role_arn_match is None:
-            self.account_id = client.get_caller_identity().get('Account')
-            self.role_name = self.get_role_name()
+        if role_arn is None:
+            caller_identity = sts_client.get_caller_identity()
+            account_id = caller_identity.get('Account')
+            role_name = self.get_role_name()
+            self.role_arn = caller_identity.get('Arn') if role_name is False \
+                    else "arn:aws:iam::" + account_id + ":role/" + role_name
         else:
-            self.account_id = role_arn_match.group(1)
-            self.role_name = role_arn_match.group(2)
+            self.role_arn = role_arn
             self.assume_role = True
 
         if region is None:
@@ -58,9 +54,7 @@ class AWSAuth(object):
         """Returns role name from either ec2 or lambda"""
         try:
             # This is an EC2 instance, get the role name from the metadata service
-            role_arn = requests.get('http://169.254.169.254/latest/meta-data/iam/info').json()['InstanceProfileArn']
-            role_arn_match = re.match(r'arn:aws:iam::.*?:(?:role|instance-profile)/(.*)', role_arn)
-            return role_arn_match.group(1)
+            return requests.get('http://169.254.169.254/latest/meta-data/iam/security-credentials/').text
         except:
             pass
 
@@ -97,16 +91,13 @@ class AWSAuth(object):
 
         return False
 
-
-
     def get_token(self):
         """Returns a client token from Cerberus"""
         request_body = {
-            'account_id': self.account_id,
-            'role_name': self.role_name,
+            'iam_principal_arn': self.role_arn,
             'region': self.region
         }
-        encrypted_resp = requests.post(self.cerberus_url + '/v1/auth/iam-role', data=json.dumps(request_body))
+        encrypted_resp = requests.post(self.cerberus_url + '/v2/auth/iam-principal', data=json.dumps(request_body))
 
         if encrypted_resp.status_code != 200:
             encrypted_resp.raise_for_status()
@@ -117,8 +108,8 @@ class AWSAuth(object):
         else:
             sts = boto3.client('sts')
             role_data = sts.assume_role(
-                RoleArn='arn:aws:iam::' + self.account_id + ':role/' + self.role_name,
-                RoleSessionName='CerberusRole'
+                RoleArn=self.role_arn,
+                RoleSessionName='CerberusAssumeRole'
             )
 
             creds = role_data['Credentials']
