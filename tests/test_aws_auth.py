@@ -54,8 +54,7 @@ class TestAWSAuth(unittest.TestCase):
                 "web"
             ],
             "metadata": {
-                "account_id": "123",
-                "iam_role_name": "web"
+                "iam_principal_arn": "arn:aws:iam::123:role/web"
             },
             "lease_duration": 3600,
             "renewable": True
@@ -77,16 +76,11 @@ class TestAWSAuth(unittest.TestCase):
         self.assertEqual(token, response_body['client_token'])
 
         # Now we'll make sure that it works w/ a supplied role ARN and region...
-        test_account = '123456789012'
-        test_role = 'test_role'
+        test_principal_arn = "arn:aws:iam::123456789012:role/test_role"
 
-        auth_client = AWSAuth(
-            "https://cerberus.fake.com",
-            "arn:aws:iam::" + test_account + ":role/" + test_role,
-            "us-east-1"
+        auth_client = AWSAuth("https://cerberus.fake.com", test_principal_arn, "us-east-1"
         )
-        self.assertEqual(auth_client.account_id, test_account)
-        self.assertEqual(auth_client.role_name, test_role)
+        self.assertEqual(auth_client.role_arn, test_principal_arn)
 
         token = auth_client.get_token()
         self.assertEqual(token, response_body['client_token'])
