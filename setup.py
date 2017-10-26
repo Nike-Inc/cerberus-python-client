@@ -5,7 +5,6 @@ setup(
     name='cerberus-python-client',
     version=CLIENT_VERSION,
     install_requires=[
-        'moto',
         'boto3',
         'requests',
     ],
