@@ -57,10 +57,12 @@ Default IAM Role Authentication:
 client = CerberusClient('https://my.cerberus.url')
 ```
 
-Assumed Role Authentication:
+Static IAM Role Authentication:
 ```python
 client = CerberusClient('https://my.cerberus.url', role_arn='arn:aws:iam::0000000000:role/role-name')
 ```
+** Note: In this case, the client authenticates with Cerberus using the given role, then tries to assume that role in order to decrypt the Cerberus auth payload.
+
 
 User Authentication:
 ```python
