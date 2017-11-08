@@ -13,7 +13,7 @@ pull request to implement write operations)
 To learn more about Cerberus, please visit the [Cerberus website](http://engineering.nike.com/cerberus/).
 
 ## Installation
-This is a Python 3 project but should be compatible with python 2.7.
+** Note: This is a Python 3 project but should be compatible with python 2.7.
 
 Clone this project and run one of the following from within the project directory:
 ```bash
@@ -41,13 +41,13 @@ python setup.py install
 
 ## Usage
 
-1. Import the client:
+#### Import the Client:
 
 ```python
 from cerberus.client import CerberusClient
 ```
 
-2. Instantiate the CerberusClient
+#### Instantiate the Client
 
 
 Default IAM Role Authentication:
@@ -66,7 +66,7 @@ User Authentication:
 client = CerberusClient('https://my.cerberus.url', username, password)
 ```
 
-3. Retrieve secret from Cerberus
+#### Retrieve Secrets from Cerberus
 
 Read one secret from an SDB:
 ```python
