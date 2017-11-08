@@ -98,7 +98,7 @@ token = AWSAuth('https://my.cerberus.url').get_token()
 from cerberus.aws_auth import AWSAuth
 token = AWSAuth('https://my.cerberus.url', 'arn:aws:iam::000000000:role/role-name').get_token()
 ```
-** Note: The auth class authenticates Cerberus using the given role, then tries to assume that role in order to decrypt the Cerberus auth payload.
+** Note: The auth class authenticates with Cerberus using the given role, then tries to assume that role in order to decrypt the Cerberus auth payload.
 
 
 * User Authentication
