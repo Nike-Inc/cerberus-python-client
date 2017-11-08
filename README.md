@@ -15,7 +15,7 @@ To learn more about Cerberus, please visit the [Cerberus website](http://enginee
 ## Installation
 This is a Python 3 project but should be compatible with python 2.7.
 
-Install the cerberus python client and required python packages:
+Clone this project and run one of the following from within the project directory:
 ```bash
 python3 setup.py install
 ```
@@ -29,19 +29,55 @@ Or simply use pip or pip3
 pip3 install cerberus-python-client
 ```
 
+Alternatively, add `cerberus-python-client` in the `install_requires` section of your project's `setup.py`.
+Then run one of the following from within your projects directory:
+```bash
+python3 setup.py install
+```
+or for python 2.7
+```bash
+python setup.py install
+```
+
 ## Usage
+
+1. Import the client:
 
 ```python
 from cerberus.client import CerberusClient
 ```
-This client supports 2 different types of authentication, both of which returns a Vault Token.
 
-* username and password (CLI usage)
+2. Instantiate the CerberusClient
+
+
+Default IAM Role Authentication:
+
+```python
+client = CerberusClient('https://my.cerberus.url')
+```
+
+Assumed role Authentication:
+```python
+client = CerberusClient('https://my.cerberus.url', role_arn='arn:aws:iam::0000000000:role/role-name')
+```
+
+User Authentication:
 ```python
 client = CerberusClient('https://my.cerberus.url', username, password)
 ```
 
-* EC2 IAM role or Lambda(default mode)
+3. Retrieve secret from Cerberus
+
+Read one secret from an SDB:
+```python
+client.get_secret("app/path/to/secret", "secretName")
+```
+
+Read all secrets from an SDB:
+```python
+client.get_secrets("app/path/to/secret")
+```
+
 
 ### Lambdas
 
