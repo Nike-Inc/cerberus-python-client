@@ -57,7 +57,7 @@ Default IAM Role Authentication:
 client = CerberusClient('https://my.cerberus.url')
 ```
 
-Static IAM Role Authentication:
+Assumed IAM Role Authentication:
 ```python
 client = CerberusClient('https://my.cerberus.url', role_arn='arn:aws:iam::0000000000:role/role-name')
 ```
@@ -93,7 +93,7 @@ from cerberus.aws_auth import AWSAuth
 token = AWSAuth('https://my.cerberus.url').get_token()
 ```
 
-* Static IAM Role Authentication:
+* Assumed IAM Role Authentication:
 ```python
 from cerberus.aws_auth import AWSAuth
 token = AWSAuth('https://my.cerberus.url', 'arn:aws:iam::000000000:role/role-name').get_token()
