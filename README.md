@@ -15,6 +15,7 @@ To learn more about Cerberus, please visit the [Cerberus website](http://enginee
 ## Installation
 ** Note: This is a Python 3 project but should be compatible with python 2.7.
 
+
 Clone this project and run one of the following from within the project directory:
 ```bash
 python3 setup.py install
@@ -56,7 +57,7 @@ Default IAM Role Authentication:
 client = CerberusClient('https://my.cerberus.url')
 ```
 
-Assumed role Authentication:
+Assumed Role Authentication:
 ```python
 client = CerberusClient('https://my.cerberus.url', role_arn='arn:aws:iam::0000000000:role/role-name')
 ```
@@ -66,16 +67,40 @@ User Authentication:
 client = CerberusClient('https://my.cerberus.url', username, password)
 ```
 
-#### Retrieve Secrets from Cerberus
+#### Read Secrets from Cerberus
 
-Read one secret from an SDB:
+To get a secret for a specific key in a safe deposit box:
 ```python
 client.get_secret("app/path/to/secret", "secretName")
 ```
 
-Read all secrets from an SDB:
+To get all the secrets for an safe deposit box:
 ```python
 client.get_secrets("app/path/to/secret")
+```
+
+#### Get a Cerberus Authentication token
+
+If you do not want to read a secret, but simply want an authentication token, then you can use one of the `<type>_auth.py` classes to retrieve a token.
+
+You can also use the CerberusClient class.
+
+* IAM Role Authentication
+```python
+from cerberus.aws_auth import AWSAuth
+token = AWSAuth('https://my.cerberus.url').get_token()
+```
+
+* Assumed Role Authentication
+```python
+from cerberus.aws_auth import AWSAuth
+token = AWSAuth('https://my.cerberus.url', 'arn:aws:iam::000000000:role/role-name').get_token()
+```
+
+* User Authentication
+```python
+from cerberus.user_auth import UserAuth
+token = UserAuth('https://my.cerberus.url', 'username', 'password').get_token()'
 ```
 
 
@@ -114,34 +139,6 @@ The IAM role assigned to the Lambda function must contain the following policy s
   }
 ```
 
-```python
-client = CerberusClient('https://my.cerberus.url')
-```
-
-To get a secret for a specific key
-```python
-secret = client.get_secret(path, key)
-```
-
-To get all the secrets for a vault path
-```python
-secrets = client.get_secrets(path)
-```
-
-If you simply want to get a token you can use the Auth classes.
-You can also use the CerberusClient class.
-
-* username and password
-```python
-from cerberus.user_auth import UserAuth
-token = UserAuth('https://my.cerberus.url', 'username', 'password').get_token()'
-```
-
-* EC2 IAM role
-```python
-from cerberus.aws_auth import AWSAuth
-token = AWSAuth('https://my.cerberus.url').get_token()
-```
 
 ## Running Tests
 
