@@ -65,7 +65,7 @@ class TestAWSAuth(unittest.TestCase):
         iam_info_response_body = {
             "Code" : "Success",
             "LastUpdated" : "2017-11-29T21:11:45Z",
-            "InstanceProfileArn" : "arn:aws:iam::123:instance-profile/rolepath/rolename",
+            "InstanceProfileArn" : "arn:aws:iam::123:instance-profile/rolepath/instanceprofilename",
             "InstanceProfileId" : "AIPAJURSEGIIGKUJSHNXY"
         }
 
