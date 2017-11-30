@@ -61,19 +61,16 @@ class CerberusClient(object):
 
         Roles are permission levels that are granted to IAM or User Groups.  Associating the id for the write role
           would allow that IAM or User Group to write in the safety deposit box."""
-        sdb_resp = requests.get(self.cerberus_url + '/v1/role',
+        roles_resp = requests.get(self.cerberus_url + '/v1/role',
                                 headers=self.HEADERS)
 
-        self.throw_if_bad_response(sdb_resp)
-        return sdb_resp.json()
+        self.throw_if_bad_response(roles_resp)
+        return roles_resp.json()
 
     def get_role(self, key):
         """Returns id of named role."""
 
-        sdb_resp = requests.get(self.cerberus_url + '/v1/role',
-                                headers=self.HEADERS)
-        self.throw_if_bad_response(sdb_resp)
-        json_resp = sdb_resp.json()
+        json_resp = self.get_roles() 
         for item in json_resp:
             if key in item["name"]:
                 return item["id"]
@@ -100,7 +97,7 @@ class CerberusClient(object):
                    iam_principal_permissions=None):
         """Create a safety deposit box.
 
-        You need to get a new token before the iam role is granted permission to the new safety deposit box.
+        You need to refresh your token before the iam role is granted permission to the new safety deposit box.
         Keyword arguments:
             name (string) -- name of the safety deposit box
             category_id (string) -- category id that determines where to store the sdb. (ex: shared, applications)
@@ -296,14 +293,14 @@ class CerberusClient(object):
         self.throw_if_bad_response(secret_resp)
         return secret_resp.json()
 
-    def put_secret(self, vault_path, key, merge=True):
+    def put_secret(self, vault_path, secret, merge=True):
         """Write secret(s) to a vault_path provided a dictionary of key/values
 
         Keyword arguments:
         vault_path -- full path in the secret deposit box that contains the key
-        key -- A dictionary containing key/values to be written at the vault_path
-        merge -- Boolean that determines if the provided key should be merged with
-            the values already present at the vault_path.  If False the key will
+        secret -- A dictionary containing key/values to be written at the vault_path
+        merge -- Boolean that determines if the provided secret keys should be merged with
+            the values already present at the vault_path.  If False the keys will
             completely overwrite what was stored at the vault_path. (default True)
         """
         # json encode the input.  Cerberus is sensitive to double vs single quotes.
