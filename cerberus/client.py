@@ -179,12 +179,8 @@ class CerberusClient(object):
 
         Keyword arguments:
         sdb -- This is the name of the safe deposit box, not the path"""
-        sdb_resp = requests.get(self.cerberus_url + '/v1/safe-deposit-box',
-                                headers=self.HEADERS)
-
-        self.throw_if_bad_response(sdb_resp)
-
-        for r in sdb_resp.json():
+        json_resp = self.get_sdbs()
+        for r in json_resp:
             if r['name'] == sdb:
                 return str(r['id'])
 
@@ -194,17 +190,14 @@ class CerberusClient(object):
 
     def get_sdb_id_by_path(self, sdb_path):
         """ Given the path, return the ID for the given safe deposit box."""
-        sdb_resp = requests.get(self.cerberus_url + '/v2/safe-deposit-box',
-                                headers=self.HEADERS)
-
-        self.throw_if_bad_response(sdb_resp)
+        json_resp = self.get_sdbs()
 
         # Deal with the supplied path possibly missing an ending slash
         path = sdb_path
         if not sdb_path.endswith('/'):
             path = sdb_path + '/'
 
-        for r in sdb_resp.json():
+        for r in json_resp:
             if r['path'] == path:
                 return str(r['id'])
 

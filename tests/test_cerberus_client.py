@@ -124,7 +124,7 @@ class TestCerberusClient(unittest.TestCase):
         assert_equals(sdb_id, sdb_data[1]['id'])
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
-            self.cerberus_url + '/v1/safe-deposit-box',
+            self.cerberus_url + '/v2/safe-deposit-box',
             headers=self.client.HEADERS
         )
 
