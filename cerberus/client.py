@@ -60,7 +60,7 @@ class CerberusClient(object):
         """Returns all the roles (IAM or User Groups) that can be granted to a safe deposit box.
 
         Roles are permission levels that are granted to IAM or User Groups.  Associating the id for the write role
-          would allow that IAM or User Group to write in the safety deposit box."""
+          would allow that IAM or User Group to write in the safe deposit box."""
         roles_resp = requests.get(self.cerberus_url + '/v1/role',
                                 headers=self.HEADERS)
 
@@ -95,14 +95,14 @@ class CerberusClient(object):
 
     def create_sdb(self, name, category_id, owner, description="", user_group_permissions=None,
                    iam_principal_permissions=None):
-        """Create a safety deposit box.
+        """Create a safe deposit box.
 
-        You need to refresh your token before the iam role is granted permission to the new safety deposit box.
+        You need to refresh your token before the iam role is granted permission to the new safe deposit box.
         Keyword arguments:
-            name (string) -- name of the safety deposit box
+            name (string) -- name of the safe deposit box
             category_id (string) -- category id that determines where to store the sdb. (ex: shared, applications)
-            owner (string) -- AD group that owns the safety deposit box
-            description (string) -- Description of the safety deposit box
+            owner (string) -- AD group that owns the safe deposit box
+            description (string) -- Description of the safe deposit box
             user_group_permissions (list) -- list of dictionaries containing the key name and maybe role_id
             iam_principal_permissions (list) -- list of dictionaries containing the key name iam_principal_arn
             and role_id
@@ -134,10 +134,10 @@ class CerberusClient(object):
         return sdb_resp.json()
 
     def delete_sdb(self, sdb_id):
-        """ Delete a safety deposit box specified by id
+        """ Delete a safe deposit box specified by id
 
         Keyword arguments:
-        sdb_id -- this is the id of the saftey deposit box, not the path."""
+        sdb_id -- this is the id of the safe deposit box, not the path."""
         sdb_resp = requests.delete(self.cerberus_url + '/v2/safe-deposit-box/' + sdb_id,
                                    headers=self.HEADERS)
         self.throw_if_bad_response(sdb_resp)
@@ -175,10 +175,10 @@ class CerberusClient(object):
         return list_resp.json()['data']['keys']
 
     def get_sdb_id(self, sdb):
-        """ Return the ID for the given safety deposit box.
+        """ Return the ID for the given safe deposit box.
 
         Keyword arguments:
-        sdb -- This is the name of the saftey deposit box, not the path"""
+        sdb -- This is the name of the safe deposit box, not the path"""
         sdb_resp = requests.get(self.cerberus_url + '/v1/safe-deposit-box',
                                 headers=self.HEADERS)
 
@@ -193,7 +193,7 @@ class CerberusClient(object):
         raise CerberusClientException("'%s' not found" % sdb)
 
     def get_sdb_id_by_path(self, sdb_path):
-        """ Given the path, return the ID for the given safety deposit box."""
+        """ Given the path, return the ID for the given safe deposit box."""
         sdb_resp = requests.get(self.cerberus_url + '/v2/safe-deposit-box',
                                 headers=self.HEADERS)
 
@@ -212,11 +212,12 @@ class CerberusClient(object):
         # looking for.
         raise CerberusClientException("'%s' not found" % sdb_path)
 
-    def get_sdb_details(self, sdb_id):
-        """ Return the details for the given safety deposit box id
+    def get_sdb_by_id(self, sdb_id):
+        """ Return the details for the given safe deposit box id
 
         Keyword arguments:
-        sdb_id -- this is the id of the saftey deposit box, not the path."""
+        sdb_id -- this is the id of the safe deposit box, not the path.
+        """
         sdb_resp = requests.get(self.cerberus_url + '/v2/safe-deposit-box/' + sdb_id,
                                 headers=self.HEADERS)
 
@@ -224,20 +225,37 @@ class CerberusClient(object):
 
         return sdb_resp.json()
 
+    def get_sdb_by_path(self, sdb_path):
+        """ Return the details for the given safe deposit box path.
+        
+        Keyword arguments:
+        sdb_path -- this is the path for the given safe deposit box.  ex: ('shared/my-test-box')
+        """
+        return self.get_sdb_by_id(self.get_sdb_id_by_path(sdb_path))
+
+    def get_sdb_by_name(self, sdb_name):
+        """ Return the details for the given safe deposit box name.
+        
+        Keyword arguments:
+        sdb_name -- this is the name for the given safe deposit box.  ex: ('My Test Box')
+        """
+        return self.get_sdb_by_id(self.get_sdb_id(sdb_name))
+
+
     def update_sdb(self, sdb_id, owner=None, description=None, user_group_permissions=None,
                    iam_principal_permissions=None):
-        """Update a safety deposit box.
+        """Update a safe deposit box.
 
         Keyword arguments:
 
-            owner (string) -- AD group that owns the safety deposit box
-            description (string) -- Description of the safety deposit box
+            owner (string) -- AD group that owns the safe deposit box
+            description (string) -- Description of the safe deposit box
             user_group_permissions (list) -- list of dictionaries containing the key name and maybe role_id
             iam_principal_permissions (list) -- list of dictionaries containing the key name iam_principal_arn
             and role_id
         """
         # Grab current data
-        old_data = self.get_sdb_details(sdb_id)
+        old_data = self.get_sdb_by_id(sdb_id)
 
         # Assemble information to update
         temp_data = {}
