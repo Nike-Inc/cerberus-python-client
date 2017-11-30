@@ -36,11 +36,21 @@ class AWSAuth(object):
         sts_client = boto3.client('sts')
 
         if role_arn is None:
-            caller_identity = sts_client.get_caller_identity()
-            account_id = caller_identity.get('Account')
             role_name = self.get_role_name()
-            self.role_arn = caller_identity.get('Arn') if role_name is False \
-                    else "arn:aws:iam::" + account_id + ":role/" + role_name
+
+            instance_profile_arn = requests.get('http://169.254.169.254/latest/meta-data/iam/info').json()['InstanceProfileArn']
+            m = re.match(r"arn:aws:iam::(.*?):instance-profile/(.*)", instance_profile_arn)
+            account_id = m.group(1)
+            instance_profile_path = m.group(2)
+
+            if "/" in instance_profile_path:
+                role_path = instance_profile_path.rsplit('/', 1)[0]
+                role_with_path = role_path + "/" + role_name
+            else:
+                role_with_path = role_name
+
+            self.role_arn = sts_client.get_caller_identity().get('Arn') if role_name is False \
+                    else "arn:aws:iam::" + account_id + ":role/" + role_with_path
         else:
             self.role_arn = role_arn
             self.assume_role = True
