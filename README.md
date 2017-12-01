@@ -71,6 +71,11 @@ client = CerberusClient('https://my.cerberus.url', username, password)
 
 #### Read Secrets from Cerberus
 
+To list what secrets are in a safe deposit box:
+```python
+client.list_secrets('app/safe-deposit-box')
+```
+
 To get a secret for a specific key in a safe deposit box:
 ```python
 client.get_secret("app/path/to/secret", "secretName")
@@ -80,6 +85,70 @@ To get all the secrets for an safe deposit box:
 ```python
 client.get_secrets("app/path/to/secret")
 ```
+
+#### Write Secrets to Cerberus
+
+To write a secret to a safe deposit box:
+```python
+client.put_secret("app/path/to/secret", {'key-name': 'value to store'})
+```
+By default `put_secret` will attempt to merge the dictionary provided with what already exists in the safe deposit box.  If you want to overwrite the stored dictionary in the safe deposit box called put_secret with merge=False.
+```python
+client.put_secret("app/path/to/secret", {'new-keys': 'new values'}, merge=False)
+```
+
+#### View roles and categories
+
+Roles are the permission scheme you apply to an AD group or IAM roles to allow reading or writing secrets.  To view the available roles and their ids:
+```python
+client.get_roles()
+```
+This will return a list of dictionaries with all the roles.
+
+A convience function is available that will return a dictionary with the role names as keys, and the role id as values.
+```python
+client.list_roles()
+```
+If you know the role name you need are are trying to get the id for it:
+```python
+client.get_role('role-name')
+```
+That will return a string containing the role id.
+
+Categories are for organizing safe deposit boxes.  To list the available categories:
+```python
+client.get_categories()
+```
+
+#### Create a Safe Deposit Box
+
+To create a new Safe Deposit Box:
+```python
+client.create_sdb(
+  'Name of Safe Deposit Box',
+  'category_id',
+  'owner_ad_group',
+  description = 'description',
+  user_group_permissions=[{ 'name': 'ad-group', 'role_id': 'role id for permissions'}],
+  iam_principal_permissions=[{'iam_principal_arn': 'arn:aws:iam:xxxxxxxxxx:role/role-name', 'role_id': 'role id for permissions'}]
+)
+```
+You will recieve a json response giving you the details of your new safe deposit box.  As a note, you usually have to refresh your tokens before you are able to write secrets to the new safe deposit box.
+
+#### Update a Safe Deposit Box
+
+To update a Safe Deposit Box:
+```python
+client.update_sdb(
+  'sdb_id',
+  owner='owner ad group',
+  description='description of safe deposit box',
+  user_group_permissions=[{'name': 'ad group', 'role_id': 'role id for permissions'}],
+  iam_principal_permissions=[{'iam_principal_arn': 'arn:aws:iam:xxxxxxxxxx:role/role-name', 'role_id': 'role id for permissions'}]
+)
+```
+When updating, if you don't specify a parameter, the current values in the safe deposit box will be kept.  So you don't need to include the description, or iam_principal_permissions if you're only updating the user_group_permissions.
+Unlike put_secret, no attempt is made to merge the permissions dictionaries for you, so if you are adding a new user group, you must include the already existing user groups you want to keep in your update call.
 
 #### Get a Cerberus Authentication token
 
