@@ -14,10 +14,12 @@ See the License for the specific language governing permissions and* limitations
 """
 
 # Stuff for tests...
+import ast
 import json
 import unittest
 
 import requests
+import mock
 from mock import patch
 from nose.tools import assert_equals, assert_in
 
@@ -43,6 +45,31 @@ class TestCerberusClient(unittest.TestCase):
                 "devices": [{"id": "223", "name": "Google Authenticator"}]
             }
         }
+        self.sdb_data = {
+            "id": "5f0-99-414-bc-e5909c",
+            "name": "Disco Events",
+            "description": "Studio 54",
+            "path": "app/disco-events/",
+            'iam_principal_permissions':
+                [{'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
+                {'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
+                    'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
+                {'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
+                    'id': '27731199-7055-3c4b-3883-9f01f17bc034',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'}],
+        }
 
     @staticmethod
     def _mock_response(status=200, reason='OK', content=''):
@@ -53,6 +80,15 @@ class TestCerberusClient(unittest.TestCase):
         # Raw content in byte
         mock_resp._content = bytes(content.encode('utf-8'))
         return mock_resp
+
+    @staticmethod
+    def _mock_response_raw(status=200, reason='OK', content=''):
+        mock_resp = requests.Response()
+        mock_resp.status_code = status
+        # Reason the status code occurred.
+        mock_resp.reason = reason
+        mock_resp._content = bytes(content.encode('utf-8'))
+        return mock_resp.json()
 
     def test_username(self):
         """ Testing that correct username is returned"""
@@ -88,7 +124,119 @@ class TestCerberusClient(unittest.TestCase):
         assert_equals(sdb_id, sdb_data[1]['id'])
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
-            self.cerberus_url + '/v1/safe-deposit-box',
+            self.cerberus_url + '/v2/safe-deposit-box',
+            headers=self.client.HEADERS
+        )
+
+    @patch('requests.get')
+    def test_get_sdb_id_by_path(self, mock_get):
+        """ Testing that get_sdb_id_by_path returns the correct ID"""
+        sdb_data = [
+            {
+                "id": "5f0-99-414-bc-e5909c",
+                "name": "Disco Events",
+                "path": "app/disco-events/",
+                "category_id": "b07-42d0-e6-9-0a47c03"
+            },
+            {
+                "id": "a7192aa7-83f0-45b7-91fb-f6b0eb",
+                "name": "snowflake",
+                "path": "app/snowflake/",
+                "category_id": "b042d0-e6-90-0aec03"
+            }
+        ]
+
+        mock_get.return_value = self._mock_response(content=json.dumps(sdb_data))
+        sdb_id = self.client.get_sdb_id_by_path("app/snowflake/")
+
+        # confirm the id matches
+        assert_equals(sdb_id, sdb_data[1]['id'])
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v2/safe-deposit-box',
+            headers=self.client.HEADERS
+        )
+
+    @patch('requests.get')
+    def test_get_sdb_id_by_path_no_slash(self, mock_get):
+        """
+        Testing that get_sdb_id_by_path returns the correct ID \
+        even when the requested path lacks a trailing slash '/'
+        """
+        sdb_data = [
+            {
+                "id": "5f0-99-414-bc-e5909c",
+                "name": "Disco Events",
+                "path": "app/disco-events/",
+                "category_id": "b07-42d0-e6-9-0a47c03"
+            },
+            {
+                "id": "a7192aa7-83f0-45b7-91fb-f6b0eb",
+                "name": "snowflake",
+                "path": "app/snowflake/",
+                "category_id": "b042d0-e6-90-0aec03"
+            }
+        ]
+
+        mock_get.return_value = self._mock_response(content=json.dumps(sdb_data))
+        sdb_id = self.client.get_sdb_id_by_path("app/snowflake")
+
+        # confirm the id matches
+        assert_equals(sdb_id, sdb_data[1]['id'])
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v2/safe-deposit-box',
+            headers=self.client.HEADERS
+        )
+
+    @patch('cerberus.client.CerberusClient.get_sdb_id', return_value="5f0-99-414-bc-e5909c")
+    @patch('requests.get')
+    def test_get_sdb_by_id(self, mock_get, mock_sdb_id):
+        """ Test that get_sdb_by_id returns some details of the sdb """
+
+        mock_resp = self._mock_response(content=json.dumps(self.sdb_data))
+        mock_get.return_value = mock_resp
+
+        details = self.client.get_sdb_by_id("5f0-99-414-bc-e5909c")
+
+        assert_equals(details, self.sdb_data)
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v2/safe-deposit-box/5f0-99-414-bc-e5909c',
+            headers=self.client.HEADERS
+        )
+
+    @patch('cerberus.client.CerberusClient.get_sdb_id', return_value="5f0-99-414-bc-e5909c")
+    @patch('requests.get')
+    def test_get_sdb_by_name(self, mock_get, mock_sdb_id):
+        """ Test that get_sdb_by_name returns some details of the sdb """
+
+        mock_resp = self._mock_response(content=json.dumps(self.sdb_data))
+        mock_get.return_value = mock_resp
+
+        details = self.client.get_sdb_by_name("Disco Events")
+
+        assert_equals(details, self.sdb_data)
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v2/safe-deposit-box/5f0-99-414-bc-e5909c',
+            headers=self.client.HEADERS
+        )
+
+    @patch('cerberus.client.CerberusClient.get_sdb_id_by_path', return_value="5f0-99-414-bc-e5909c")
+    @patch('requests.get')
+    def test_get_sdb_by_path(self, mock_get, mock_sdb_id):
+        """ Test that get_sdb_by_path returns some details of the sdb """
+
+        mock_resp = self._mock_response(content=json.dumps(self.sdb_data))
+        mock_get.return_value = mock_resp
+
+        details = self.client.get_sdb_by_path("app/disco-events/")
+
+        assert_equals(details, self.sdb_data)
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v2/safe-deposit-box/5f0-99-414-bc-e5909c',
             headers=self.client.HEADERS
         )
 
@@ -114,6 +262,75 @@ class TestCerberusClient(unittest.TestCase):
             self.cerberus_url + '/v1/safe-deposit-box/5f0-99-414-bc-e5909c/',
             headers=self.client.HEADERS
         )
+
+    @patch('requests.post')
+    def test_create_sdb(self, mock_get):
+        """ Test creation of sdb """
+        sdb_data = {
+            'id': '5f0-99-414-bc-e5909c',
+            'name': 'Disco Events',
+            'description': 'Studio 54',
+            'path': 'app/disco-events/',
+            'category_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+            'created_by': 'tester@studio54.com',
+            'created_ts': '1978-11-27T23:08:14.027Z',
+            'iam_principal_permissions': [{
+                'created_by': 'tester@studio54.com',
+                'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
+                'last_updated_by': 'tester@studio54.com',
+                'last_updated_ts': '1974-11-17T00:02:30Z',
+                'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
+                {'created_by': 'tester@studio54.com',
+                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
+                 'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
+                 'last_updated_by': 'tester@studio54.com',
+                 'last_updated_ts': '1974-11-17T00:02:30Z',
+                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
+                {'created_by': 'tester@studio54.com',
+                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
+                 'id': '27731199-7055-3c4b-3883-9f01f17bc034',
+                 'last_updated_by': 'tester@studio54.com',
+                 'last_updated_ts': '1974-11-17T00:02:30Z',
+                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'}],
+            'owner': 'Admin.Studio.54',
+            'user_group_permissions': []
+            }
+        mock_resp = mock.Mock()
+        mock_resp.json.return_value = sdb_data
+        #mock_resp = self._mock_response(content=json.dumps(sdb_data))
+        mock_get.return_value = mock_resp
+
+        create = self.client.create_sdb(
+            'Disco Events',
+            '244cfc0d-4beb-8189-5056-194f18ead6f4',
+            'Admin.Studio.54',
+            'Studio 54',
+            [],
+            [
+                {
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                },
+                {
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                },
+                {
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                },
+            ]
+            )
+
+        assert_equals(create, sdb_data)
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        #mock_get.assert_called_once_with(self.cerberus_url + '/v2/safe-deposit-box')
+        #mock_get.assert_called_with(
+        #    self.cerberus_url + '/v2/safe-deposit-box',
+        #    data={"owner": "Admin.Studio.54", "iam_principal_permissions": [{"iam_principal_arn": "arn:aws:iam::292800423415:role/studio54-dancefloor", "role_id": "8609a0c3-31e5-49ab-914d-c70c35da9478"}, {"iam_principal_arn": "arn:aws:iam::292800423415:role/studio54-bar", "role_id": "8609a0c3-31e5-49ab-914d-c70c35da9478"}, {"iam_principal_arn": "arn:aws:iam::292800423415:role/studio54-office", "role_id": "8609a0c3-31e5-49ab-914d-c70c35da9478"}], "description": "Studio 54", "category_id": "244cfc0d-4beb-8189-5056-194f18ead6f4", "name": "Disco Events"},
+        #    headers=self.client.HEADERS
+        #)
 
     @patch('requests.get')
     def test_get_sdb_keys(self, mock_get):
