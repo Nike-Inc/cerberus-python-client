@@ -4,6 +4,9 @@ All notable changes to `Cerberus Python Client` will be documented in this file.
 
 ### Added
 
+###### 02-06-2018
+- Fixes to `put_secret` method and updated supported verb as per [Cerberus API Docs](https://github.com/Nike-Inc/cerberus-management-service/blob/master/API.md#createupdate-secrets-at-a-path-post)
+
 ###### 30-11-2017
 - Added support for paths in role ARN's - fix for [#13](https://github.com/Nike-Inc/cerberus-python-client/issues/13)
 
