@@ -317,10 +317,10 @@ class CerberusClient(object):
         # json encode the input.  Cerberus is sensitive to double vs single quotes.
         # an added bonus is that json encoding transforms python2 unicode strings
         # into a compatible format.
-        data = json.encoder.JSONEncoder().encode(key)
+        data = json.encoder.JSONEncoder().encode(secret)
         if merge:
-            data = self.secret_merge(vault_path, key)
-        secret_resp = requests.put(self.cerberus_url + '/v1/secret/' + vault_path,
+            data = self.secret_merge(vault_path, secret)
+        secret_resp = requests.post(self.cerberus_url + '/v1/secret/' + vault_path,
                                    data=str(data), headers=self.HEADERS)
         self.throw_if_bad_response(secret_resp)
         return secret_resp
