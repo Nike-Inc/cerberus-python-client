@@ -78,12 +78,14 @@ client.list_secrets('app/safe-deposit-box')
 
 To get a secret for a specific key in a safe deposit box:
 ```python
-client.get_secret("app/path/to/secret", "secretName")
+client.get_secrets_data("app/path/to/secret")["secretName"]
 ```
+
+** Note: If you need to get more than one key, it's best to use the following example to get all the secrets at once instead of calling get_secrets_data multiple times.
 
 To get all the secrets for an safe deposit box:
 ```python
-client.get_secrets("app/path/to/secret")
+client.get_secrets_data("app/path/to/secret")
 ```
 
 #### Write Secrets to Cerberus

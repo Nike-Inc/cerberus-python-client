@@ -21,6 +21,7 @@ from .user_auth import UserAuth
 from . import CerberusClientException, CLIENT_VERSION
 import ast
 import json
+import warnings
 
 
 class CerberusClient(object):
@@ -53,11 +54,11 @@ class CerberusClient(object):
             self.token = awsa.get_token()
 
     def get_token(self):
-        """Returns a client token from Cerberus"""
+        """Return a client token from Cerberus"""
         return self.token
 
     def get_roles(self):
-        """Returns all the roles (IAM or User Groups) that can be granted to a safe deposit box.
+        """Return all the roles (IAM or User Groups) that can be granted to a safe deposit box.
 
         Roles are permission levels that are granted to IAM or User Groups.  Associating the id for the write role
           would allow that IAM or User Group to write in the safe deposit box."""
@@ -68,7 +69,7 @@ class CerberusClient(object):
         return roles_resp.json()
 
     def get_role(self, key):
-        """Returns id of named role."""
+        """Return id of named role."""
 
         json_resp = self.get_roles() 
         for item in json_resp:
@@ -280,7 +281,17 @@ class CerberusClient(object):
         return secret_resp
 
     def get_secret(self, vault_path, key):
-        """Returns the secret based on the vault_path and key"""
+        """(Deprecated)Returns the secret based on the vault_path and key
+
+        This method is deprecated because it misleads users into thinking they're only getting one value from Cerberus
+        when in reality they're getting all values, from which a single value is returned.
+        Use get_secrets_data(vault_path)[key] instead.
+        (See https://github.com/Nike-Inc/cerberus-python-client/issues/18)
+        """
+        warnings.warn(
+            "get_secret is deprecated, use get_secrets_data instead",
+            DeprecationWarning
+        )
         secret_resp_json = self.get_secrets(vault_path)
 
         if key in secret_resp_json['data']:
@@ -289,13 +300,38 @@ class CerberusClient(object):
             raise CerberusClientException("Key '%s' not found" % key)
 
     def get_secrets(self, vault_path):
-        """Returns json secrets based on the vault_path"""
+        """(Deprecated)Returns json secrets based on the vault_path
+
+        This method is deprecated because an addition step of reading value with ['data'] key from the returned
+        data is required to get secrets, which contradicts the method name.
+        Use get_secrets_data(vault_path) instead.
+        (See https://github.com/Nike-Inc/cerberus-python-client/issues/19)
+        """
+        warnings.warn(
+            "get_secrets is deprecated, use get_secrets_data instead",
+            DeprecationWarning
+        )
         secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path,
                                    headers=self.HEADERS)
 
         self.throw_if_bad_response(secret_resp)
 
         return secret_resp.json()
+
+    def get_secrets_data(self, vault_path):
+        """Returns json secrets based on the vault_path
+
+        Keyword arguments:
+
+            vault_path (string) -- full path in the secret deposit box that contains the key
+        """
+        secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path,
+                                   headers=self.HEADERS)
+
+        self.throw_if_bad_response(secret_resp)
+
+        return secret_resp.json()['data']
+
 
     def list_secrets(self, vault_path):
         """Returns json secrets based on the vault_path, this will list keys in a folder"""

@@ -382,6 +382,31 @@ class TestCerberusClient(unittest.TestCase):
         )
 
     @patch('requests.get')
+    def test_getting_secrets_data(self, mock_get):
+        """ Testing the correct secrets are returned"""
+        secret_data = {
+            "data": {
+                "sushi": "ikenohana",
+                "ramen": "yuzu"
+            }
+        }
+
+        mock_resp = self._mock_response(content=json.dumps(secret_data))
+        mock_get.return_value = mock_resp
+
+        secrets = self.client.get_secrets_data('fake/path')
+
+        # check to make sure we got the right secret
+        assert_equals(secrets['sushi'], 'ikenohana')
+        assert_equals(secrets['ramen'], 'yuzu')
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/secret/fake/path',
+            headers=self.client.HEADERS
+        )
+
+
+    @patch('requests.get')
     def test_get_secrets_invalid_path(self, mget):
         """ Ensure that a Cerberus exception is raised if the path is invalid. """
         mget.return_value = self._mock_response(status=401)
