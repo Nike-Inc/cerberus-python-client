@@ -153,7 +153,7 @@ class CerberusClient(object):
         return sdb_resp.json()
 
     def get_sdb_path(self, sdb):
-        """Returns the path for a SDB"""
+        """Return the path for a SDB"""
         sdb_id = self.get_sdb_id(sdb)
         sdb_resp = requests.get(
             self.cerberus_url + '/v1/safe-deposit-box/' + sdb_id + '/',
@@ -165,7 +165,7 @@ class CerberusClient(object):
         return sdb_resp.json()['path']
 
     def get_sdb_keys(self, path):
-        """Returns the keys for a SDB, which are need for the full vault path"""
+        """Return the keys for a SDB, which are need for the full vault path"""
         list_resp = requests.get(
             self.cerberus_url + '/v1/secret/' + path + '/?list=true',
             headers=self.HEADERS
@@ -281,7 +281,7 @@ class CerberusClient(object):
         return secret_resp
 
     def get_secret(self, vault_path, key):
-        """(Deprecated)Returns the secret based on the vault_path and key
+        """(Deprecated)Return the secret based on the vault_path and key
 
         This method is deprecated because it misleads users into thinking they're only getting one value from Cerberus
         when in reality they're getting all values, from which a single value is returned.
@@ -300,7 +300,7 @@ class CerberusClient(object):
             raise CerberusClientException("Key '%s' not found" % key)
 
     def get_secrets(self, vault_path):
-        """(Deprecated)Returns json secrets based on the vault_path
+        """(Deprecated)Return json secrets based on the vault_path
 
         This method is deprecated because an addition step of reading value with ['data'] key from the returned
         data is required to get secrets, which contradicts the method name.
@@ -319,7 +319,7 @@ class CerberusClient(object):
         return secret_resp.json()
 
     def get_secrets_data(self, vault_path):
-        """Returns json secrets based on the vault_path
+        """Return json secrets based on the vault_path
 
         Keyword arguments:
 
@@ -334,7 +334,7 @@ class CerberusClient(object):
 
 
     def list_secrets(self, vault_path):
-        """Returns json secrets based on the vault_path, this will list keys in a folder"""
+        """Return json secrets based on the vault_path, this will list keys in a folder"""
         secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path + '?list=true',
                                    headers=self.HEADERS)
         self.throw_if_bad_response(secret_resp)
@@ -362,7 +362,7 @@ class CerberusClient(object):
         return secret_resp
 
     def secret_merge(self, vault_path, key):
-        """Compares key/values at vault_path and merges them.  New values will overwrite old."""
+        """Compare key/values at vault_path and merges them.  New values will overwrite old."""
         get_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path, headers=self.HEADERS)
         temp_key = {}
         # Ignore a return of 404 since it means the key might not exist
