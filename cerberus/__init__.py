@@ -1,6 +1,6 @@
 __all__ = ['client', 'user_auth', 'aws_auth']
 
-CLIENT_VERSION = '0.9.0'
+CLIENT_VERSION = '0.10.0'
 
 
 class CerberusClientException(Exception):
