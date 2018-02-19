@@ -50,6 +50,7 @@ class CerberusClient(object):
 
     def set_lambda_context(self, lambda_context):
         invoked_function_arn = lambda_context.invoked_function_arn
+        # A function arn looks like this: 'arn:aws:lambda:us-west-1:292800423415::function:foo:1'. The '1' at the end (the qualifier) is optional.
         arn = invoked_function_arn.split(':')
         kwargs = {"FunctionName":arn[6]}
         if(len(arn)>7):
