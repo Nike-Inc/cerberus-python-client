@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and* limitations
 
 import requests
 from requests.exceptions import RequestException
+import boto3
 
 from .aws_auth import AWSAuth
 from .user_auth import UserAuth
@@ -30,7 +31,7 @@ class CerberusClient(object):
         via the Auth Classes"""
     HEADERS = {'Content-Type': 'application/json'}
 
-    def __init__(self, cerberus_url, username=None, password=None, role_arn=None, region=None):
+    def __init__(self, cerberus_url, username=None, password=None, role_arn=None, region=None, assume_role=True, lambda_context=None):
         """Username and password are optional, they are not needed
            for IAM Role Auth"""
         self.cerberus_url = cerberus_url
@@ -39,10 +40,24 @@ class CerberusClient(object):
         self.role_arn = role_arn
         self.region = region
         self.token = None
+        self.assume_role = assume_role
+        if lambda_context is not None:
+            self.set_lambda_context(lambda_context)
         self.set_token()
 
         self.HEADERS['X-Vault-Token'] = self.token
         self.HEADERS['X-Cerberus-Client'] = 'CerberusPythonClient/' + CLIENT_VERSION
+
+    def set_lambda_context(self, lambda_context):
+        invoked_function_arn = lambda_context.invoked_function_arn
+        arn = invoked_function_arn.split(':')
+        kwargs = {"FunctionName":arn[6]}
+        if(len(arn)>7):
+            kwargs["Qualifier"]=arn[7]
+        lambda_client = boto3.client('lambda')
+        response = lambda_client.get_function_configuration(**kwargs)
+        self.role_arn = response['Role']
+        self.assume_role = False
 
     def set_token(self):
         """Set the Vault token based on auth type"""
@@ -50,7 +65,7 @@ class CerberusClient(object):
             ua = UserAuth(self.cerberus_url, self.username, self.password)
             self.token = ua.get_token()
         else:
-            awsa = AWSAuth(self.cerberus_url, role_arn=self.role_arn, region=self.region)
+            awsa = AWSAuth(self.cerberus_url, role_arn=self.role_arn, region=self.region, assume_role=self.assume_role)
             self.token = awsa.get_token()
 
     def get_token(self):
