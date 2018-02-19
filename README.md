@@ -51,7 +51,7 @@ from cerberus.client import CerberusClient
 #### Instantiate the Client
 
 
-Default IAM Role Authentication:
+Default IAM Role Authentication(EC2 instances only):
 
 ```python
 client = CerberusClient('https://my.cerberus.url')
@@ -63,6 +63,17 @@ client = CerberusClient('https://my.cerberus.url', role_arn='arn:aws:iam::000000
 ```
 ** Note: In this case, the client authenticates with Cerberus using the given role, then tries to assume that role in order to decrypt the Cerberus auth payload.
 
+IAM Role Authentication with IAM Role ARN(Lambda):
+```python
+client = CerberusClient('https://my.cerberus.url', role_arn='arn:aws:iam::0000000000:role/role-name', assume_role=False)
+```
+** Note: Unlike the default IAM Role Authentication constructor, this constructor will not attempt to figure out the role_arn, which may decrease overall latency. This the recommended constructor for Lambda.
+
+IAM Role Authentication with Lambda context:
+```python
+client = CerberusClient('https://my.cerberus.url', lambda_context=context)
+```
+** Note: This constructor may adds extra latency from pulling configuration from AWS.
 
 User Authentication:
 ```python
@@ -212,6 +223,26 @@ The IAM role assigned to the Lambda function must contain the following policy s
       }
     ]
   }
+```
+
+#### Lambda examples
+Get secrets from Cerberus using IAM Role (execution role) ARN. It's a good idea to cache the secrets since AWS reuses Lambda instances.
+```python
+import os
+secrets=None
+def lambda_handler(event, context):
+    if secrets is None:
+        client=CerberusClient('https://dev.cerberus.nikecloud.com', role_arn=os.environ['role_arn'], assume_role=False)
+        secrets = client.get_secrets_data("app/yourapplication/dbproperties")['dbpasswd']
+```
+Get secrets from Cerberus using Lambda context (extra latency from pulling configuration from AWS).
+```python
+from cerberus.client import CerberusClient
+secrets=None
+def lambda_handler(event, context):
+    if secrets is None:
+        client=CerberusClient('https://dev.cerberus.nikecloud.com', lambda_context=context)
+        secrets = client.get_secrets_data("app/yourapplication/dbproperties")
 ```
 
 

@@ -27,11 +27,11 @@ class AWSAuth(object):
     region = None
     assume_role = False
 
-    def __init__(self, cerberus_url, role_arn=None, region=None):
+    def __init__(self, cerberus_url, role_arn=None, region=None, assume_role=True):
         self.cerberus_url = cerberus_url
-        self.set_auth(role_arn, region)
+        self.set_auth(role_arn, region, assume_role)
 
-    def set_auth(self, role_arn=None, region=None):
+    def set_auth(self, role_arn=None, region=None, assume_role=True):
         """Sets the variables needed for AWS Auth"""
         sts_client = boto3.client('sts')
 
@@ -53,7 +53,7 @@ class AWSAuth(object):
                     else "arn:aws:iam::" + account_id + ":role/" + role_with_path
         else:
             self.role_arn = role_arn
-            self.assume_role = True
+            self.assume_role = assume_role
 
         if region is None:
             self.region = self.get_region()
