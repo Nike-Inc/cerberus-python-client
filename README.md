@@ -229,10 +229,11 @@ The IAM role assigned to the Lambda function must contain the following policy s
 Get secrets from Cerberus using IAM Role (execution role) ARN. It's a good idea to cache the secrets since AWS reuses Lambda instances.
 ```python
 import os
-secrets=None
+from cerberus.client import CerberusClient
+secrets = None
 def lambda_handler(event, context):
     if secrets is None:
-        client=CerberusClient('https://dev.cerberus.nikecloud.com', role_arn=os.environ['role_arn'], assume_role=False)
+        client = CerberusClient('https://dev.cerberus.nikecloud.com', role_arn=os.environ['role_arn'], assume_role=False)
         secrets = client.get_secrets_data("app/yourapplication/dbproperties")['dbpasswd']
 ```
 Get secrets from Cerberus using Lambda context (extra latency from pulling configuration from AWS).
@@ -241,7 +242,7 @@ from cerberus.client import CerberusClient
 secrets=None
 def lambda_handler(event, context):
     if secrets is None:
-        client=CerberusClient('https://dev.cerberus.nikecloud.com', lambda_context=context)
+        client = CerberusClient('https://dev.cerberus.nikecloud.com', lambda_context=context)
         secrets = client.get_secrets_data("app/yourapplication/dbproperties")
 ```
 
