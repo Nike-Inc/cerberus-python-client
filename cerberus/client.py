@@ -32,8 +32,7 @@ class CerberusClient(object):
     HEADERS = {'Content-Type': 'application/json'}
 
     def __init__(self, cerberus_url, username=None, password=None, role_arn=None, region=None, assume_role=True, lambda_context=None):
-        """Username and password are optional, they are not needed
-           for IAM Role Auth"""
+        """Username and password are optional, they are not needed for IAM Role Auth"""
         self.cerberus_url = cerberus_url
         self.username = username or ""
         self.password = password or ""
@@ -48,13 +47,20 @@ class CerberusClient(object):
         self.HEADERS['X-Vault-Token'] = self.token
         self.HEADERS['X-Cerberus-Client'] = 'CerberusPythonClient/' + CLIENT_VERSION
 
+    def _add_slash(self, string=None):
+        """ if a string doesn't end in a '/' add one """
+        if(not str.endswith(string, '/')):
+            return str.join('', [string, '/'])
+        return str(string)
+
     def set_lambda_context(self, lambda_context):
         invoked_function_arn = lambda_context.invoked_function_arn
-        # A function arn looks like this: 'arn:aws:lambda:us-west-1:292800423415::function:foo:1'. The '1' at the end (the qualifier) is optional.
+        # A function arn looks like this: 'arn:aws:lambda:us-west-1:292800423415::function:foo:1'.
+        # The '1' at the end (the qualifier) is optional
         arn = invoked_function_arn.split(':')
-        kwargs = {"FunctionName":arn[6]}
-        if(len(arn)>7):
-            kwargs["Qualifier"]=arn[7]
+        kwargs = {"FunctionName": arn[6]}
+        if(len(arn) > 7):
+            kwargs["Qualifier"] = arn[7]
         lambda_client = boto3.client('lambda')
         response = lambda_client.get_function_configuration(**kwargs)
         self.role_arn = response['Role']
@@ -79,7 +85,7 @@ class CerberusClient(object):
         Roles are permission levels that are granted to IAM or User Groups.  Associating the id for the write role
           would allow that IAM or User Group to write in the safe deposit box."""
         roles_resp = requests.get(self.cerberus_url + '/v1/role',
-                                headers=self.HEADERS)
+                                  headers=self.HEADERS)
 
         self.throw_if_bad_response(roles_resp)
         return roles_resp.json()
@@ -87,7 +93,7 @@ class CerberusClient(object):
     def get_role(self, key):
         """Return id of named role."""
 
-        json_resp = self.get_roles() 
+        json_resp = self.get_roles()
         for item in json_resp:
             if key in item["name"]:
                 return item["id"]
@@ -210,9 +216,7 @@ class CerberusClient(object):
         json_resp = self.get_sdbs()
 
         # Deal with the supplied path possibly missing an ending slash
-        path = sdb_path
-        if not sdb_path.endswith('/'):
-            path = sdb_path + '/'
+        path = self._add_slash(sdb_path)
 
         for r in json_resp:
             if r['path'] == path:
@@ -237,7 +241,7 @@ class CerberusClient(object):
 
     def get_sdb_by_path(self, sdb_path):
         """ Return the details for the given safe deposit box path.
-        
+
         Keyword arguments:
         sdb_path -- this is the path for the given safe deposit box.  ex: ('shared/my-test-box')
         """
@@ -245,16 +249,38 @@ class CerberusClient(object):
 
     def get_sdb_by_name(self, sdb_name):
         """ Return the details for the given safe deposit box name.
-        
+
         Keyword arguments:
         sdb_name -- this is the name for the given safe deposit box.  ex: ('My Test Box')
         """
         return self.get_sdb_by_id(self.get_sdb_id(sdb_name))
 
+    def get_sdb_secret_version_paths(self, sdb_id):
+        """ Get SDB secret version paths.  This function takes the sdb_id """
+        sdb_resp = requests.get(str.join('', [self.cerberus_url, '/v1/sdb-secret-version-paths/', sdb_id]),
+                                headers=self.HEADERS)
+
+        self.throw_if_bad_response(sdb_resp)
+
+        return sdb_resp.json()
+
+    def get_sdb_secret_version_paths_by_path(self, sdb_path):
+        """ Get SDB secret version paths.  This function takes the sdb_path """
+        return self.get_sdb_secret_version_paths(self.get_sdb_id_by_path(sdb_path))
+
+    def list_sdbs(self):
+        """ Return sdbs by Name """
+        sdb_raw = self.get_sdbs()
+        sdbs = []
+        for s in sdb_raw:
+            sdbs.append(s['name'])
+
+        return sdbs
 
     def update_sdb(self, sdb_id, owner=None, description=None, user_group_permissions=None,
                    iam_principal_permissions=None):
-        """Update a safe deposit box.
+        """
+        Update a safe deposit box.
 
         Keyword arguments:
 
@@ -269,7 +295,7 @@ class CerberusClient(object):
 
         # Assemble information to update
         temp_data = {}
-        keys = ('owner', 'description','iam_principal_permissions', 'user_group_permissions')
+        keys = ('owner', 'description', 'iam_principal_permissions', 'user_group_permissions')
         for k in keys:
             if k in old_data:
                 temp_data[k] = old_data[k]
@@ -291,13 +317,14 @@ class CerberusClient(object):
 
     def delete_secret(self, vault_path):
         """Delete a secret from the given vault path"""
-        secret_resp = requests.delete(self.cerberus_url + '/v1/secret/' + vault_path,
+        secret_resp = requests.delete(self.cerberus_url + '/v1/secret/' + str.strip(vault_path, '/'),
                                       headers=self.HEADERS)
         self.throw_if_bad_response(secret_resp)
         return secret_resp
 
-    def get_secret(self, vault_path, key):
-        """(Deprecated)Return the secret based on the vault_path and key
+    def get_secret(self, vault_path, key, version=None):
+        """
+        (Deprecated)Return the secret based on the vault_path and key
 
         This method is deprecated because it misleads users into thinking they're only getting one value from Cerberus
         when in reality they're getting all values, from which a single value is returned.
@@ -308,14 +335,32 @@ class CerberusClient(object):
             "get_secret is deprecated, use get_secrets_data instead",
             DeprecationWarning
         )
-        secret_resp_json = self.get_secrets(vault_path)
+        secret_resp_json = self._get_secrets(vault_path, version)
 
         if key in secret_resp_json['data']:
             return secret_resp_json['data'][key]
         else:
             raise CerberusClientException("Key '%s' not found" % key)
 
-    def get_secrets(self, vault_path):
+    def _get_secrets(self, vault_path, version=None):
+        """
+        Return full json secrets based on the vault_path
+        Keyword arguments:
+
+            vault_path (string) -- full path in the secret deposit box that contains the key
+                                   /shared/sdb-path/secret
+        """
+        if(version is None):
+            version = "CURRENT"
+
+        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret/', str.strip(vault_path, '/'),
+                                   '?versionId=', str(version)]), headers=self.HEADERS)
+
+        self.throw_if_bad_response(secret_resp)
+
+        return secret_resp.json()
+
+    def get_secrets(self, vault_path, version=None):
         """(Deprecated)Return json secrets based on the vault_path
 
         This method is deprecated because an addition step of reading value with ['data'] key from the returned
@@ -327,30 +372,69 @@ class CerberusClient(object):
             "get_secrets is deprecated, use get_secrets_data instead",
             DeprecationWarning
         )
-        secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path,
-                                   headers=self.HEADERS)
+        return self._get_secrets(vault_path, version)
 
-        self.throw_if_bad_response(secret_resp)
-
-        return secret_resp.json()
-
-    def get_secrets_data(self, vault_path):
+    def get_secrets_data(self, vault_path, version=None):
         """Return json secrets based on the vault_path
 
         Keyword arguments:
 
             vault_path (string) -- full path in the secret deposit box that contains the key
         """
-        secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path,
-                                   headers=self.HEADERS)
+        return self._get_secrets(vault_path, version)['data']
 
+    def get_secret_versions(self, vault_path, limit=None, offset=None):
+        """
+        Get verions of a particular secret key
+
+        vault_path -- full path to the key in the safety deposit box
+        limit -- Default(100), limits how many records to be returned from the api at once.
+        offset -- Default(0), used for pagination.  Will request records from the given offset.
+        """
+        # Set the normal defaults
+        if(limit is None):
+            limit = 100
+
+        if(offset is None):
+            offset = 0
+
+        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret-versions/', vault_path,
+                                   '?limit=', str(limit), '&offset=', str(offset)]), headers=self.HEADERS)
         self.throw_if_bad_response(secret_resp)
+        return secret_resp.json()
 
-        return secret_resp.json()['data']
+    def get_all_secret_version_ids(self, vault_path, limit=None):
+        """
+        Convience function that returns a generator that will paginate over the secret version ids
+        vault_path -- full path to the key in the safety deposit box
+        limit -- Default(100), limits how many records to be returned from the api at once.
+        """
+        offset = 0
+        versions = self.get_secret_versions(vault_path, limit, offset)
+        for summary in versions['secure_data_version_summaries']:
+            yield summary
+        while (versions['has_next']):
+            offset = versions['next_offset']
+            versions = self.get_secret_versions(vault_path, limit, offset)
+            for summary in versions['secure_data_version_summaries']:
+                yield summary
 
+    def get_all_secret_versions(self, vault_path, limit=None):
+        """
+        Convience function that returns a generator yielding the contents of secrets and their version info
+        vault_path -- full path to the key in the safety deposit box
+        limit -- Default(100), limits how many records to be returned from the api at once.
+        """
+        for secret in self.get_all_secret_version_ids(vault_path, limit):
+            yield {'secret': self.get_secrets_data(vault_path, version=secret['id']),
+                   'version': secret}
 
     def list_secrets(self, vault_path):
         """Return json secrets based on the vault_path, this will list keys in a folder"""
+
+        # Because of the addition of versionId and the way URLs are constructed, vault_path should
+        #  always end in a '/'.
+        vault_path = self._add_slash(vault_path)
         secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path + '?list=true',
                                    headers=self.HEADERS)
         self.throw_if_bad_response(secret_resp)
@@ -360,7 +444,7 @@ class CerberusClient(object):
         """Write secret(s) to a vault_path provided a dictionary of key/values
 
         Keyword arguments:
-        vault_path -- full path in the secret deposit box that contains the key
+        vault_path -- full path in the safety deposit box that contains the key
         secret -- A dictionary containing key/values to be written at the vault_path
         merge -- Boolean that determines if the provided secret keys should be merged with
             the values already present at the vault_path.  If False the keys will
@@ -373,7 +457,7 @@ class CerberusClient(object):
         if merge:
             data = self.secret_merge(vault_path, secret)
         secret_resp = requests.post(self.cerberus_url + '/v1/secret/' + vault_path,
-                                   data=str(data), headers=self.HEADERS)
+                                    data=str(data), headers=self.HEADERS)
         self.throw_if_bad_response(secret_resp)
         return secret_resp
 

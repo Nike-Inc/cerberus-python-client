@@ -99,6 +99,20 @@ To get all the secrets for an safe deposit box:
 client.get_secrets_data("app/path/to/secret")
 ```
 
+To view the available versions of a secret in a safe deposit box:
+```python
+client.get_secret_versions("app/path/to/secret")
+
+#optionally you can pass a limit and offset to limit the output returned and paginate through it.
+
+client.get_secret_versions("app/path/to/secret", limit=100, offset=0)
+```
+
+To get a secret at a specific version:
+```python
+client.get_secrets_data("app/path/to/secret", version='<version id>')
+```
+
 #### Write Secrets to Cerberus
 
 To write a secret to a safe deposit box:
