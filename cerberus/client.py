@@ -392,6 +392,15 @@ class CerberusClient(object):
         limit -- Default(100), limits how many records to be returned from the api at once.
         offset -- Default(0), used for pagination.  Will request records from the given offset.
         """
+
+        # Make sure that limit and offset are in range.
+        # Setting to None so that they defaults take over.
+        if limit <= 0:
+            limit = None
+
+        if offset <0:
+            offset = None
+
         # Set the normal defaults
         if not limit:
             limit = 100
@@ -404,17 +413,17 @@ class CerberusClient(object):
                                    params=payload, headers=self.HEADERS)
         self.throw_if_bad_response(secret_resp)
         return secret_resp.json()
-
+    
     def _get_all_secret_version_ids(self, vault_path, limit=None):
         """
         Convience function that returns a generator that will paginate over the secret version ids
         vault_path -- full path to the key in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
+        
         offset = 0
-        versions = self.get_secret_versions(vault_path, limit, offset)
-        for summary in versions['secure_data_version_summaries']:
-            yield summary
+        # Prime the versions dictionary so that all the logic can happen in the loop
+        versions = {'has_next': True, 'next_offset': 0}
         while (versions['has_next']):
             offset = versions['next_offset']
             versions = self.get_secret_versions(vault_path, limit, offset)
