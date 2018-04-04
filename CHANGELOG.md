@@ -4,6 +4,9 @@ All notable changes to `Cerberus Python Client` will be documented in this file.
 
 ### Added
 
+###### 04-04-2018
+- Version 0.12.0 - Added support for versioning of secrets in Cerberus.
+
 ###### 02-06-2018
 - Fixes to `put_secret` method and updated supported verb as per [Cerberus API Docs](https://github.com/Nike-Inc/cerberus-management-service/blob/master/API.md#createupdate-secrets-at-a-path-post)
 
