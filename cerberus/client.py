@@ -317,7 +317,7 @@ class CerberusClient(object):
 
     def delete_secret(self, vault_path):
         """Delete a secret from the given vault path"""
-        secret_resp = requests.delete(self.cerberus_url + '/v1/secret/' + str.strip(vault_path, '/'),
+        secret_resp = requests.delete(self.cerberus_url + '/v1/secret/' + vault_path,
                                       headers=self.HEADERS)
         self.throw_if_bad_response(secret_resp)
         return secret_resp
@@ -350,11 +350,12 @@ class CerberusClient(object):
             vault_path (string) -- full path in the secret deposit box that contains the key
                                    /shared/sdb-path/secret
         """
-        if(version is None):
+        if not version:
             version = "CURRENT"
 
-        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret/', str.strip(vault_path, '/'),
-                                   '?versionId=', str(version)]), headers=self.HEADERS)
+        payload={'versionId': str(version)}
+        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret/',vault_path]),
+                                   params=payload, headers=self.HEADERS)
 
         self.throw_if_bad_response(secret_resp)
 
@@ -392,18 +393,19 @@ class CerberusClient(object):
         offset -- Default(0), used for pagination.  Will request records from the given offset.
         """
         # Set the normal defaults
-        if(limit is None):
+        if not limit:
             limit = 100
 
-        if(offset is None):
+        if not offset:
             offset = 0
 
-        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret-versions/', vault_path,
-                                   '?limit=', str(limit), '&offset=', str(offset)]), headers=self.HEADERS)
+        payload = {'limit': str(limit), 'offset': str(offset)}
+        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret-versions/', vault_path]),
+                                   params=payload, headers=self.HEADERS)
         self.throw_if_bad_response(secret_resp)
         return secret_resp.json()
 
-    def get_all_secret_version_ids(self, vault_path, limit=None):
+    def _get_all_secret_version_ids(self, vault_path, limit=None):
         """
         Convience function that returns a generator that will paginate over the secret version ids
         vault_path -- full path to the key in the safety deposit box
@@ -419,13 +421,13 @@ class CerberusClient(object):
             for summary in versions['secure_data_version_summaries']:
                 yield summary
 
-    def get_all_secret_versions(self, vault_path, limit=None):
+    def _get_all_secret_versions(self, vault_path, limit=None):
         """
         Convience function that returns a generator yielding the contents of secrets and their version info
         vault_path -- full path to the key in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
-        for secret in self.get_all_secret_version_ids(vault_path, limit):
+        for secret in self._get_all_secret_version_ids(vault_path, limit):
             yield {'secret': self.get_secrets_data(vault_path, version=secret['id']),
                    'version': secret}
 

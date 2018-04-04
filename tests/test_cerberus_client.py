@@ -142,7 +142,6 @@ class TestCerberusClient(unittest.TestCase):
         }
     ]
 
-    #@patch('cerberus.client.CerberusClient.get_sdbs', return_value=sdb_data)
     @patch('requests.get')
     def test_list_sdbs(self, mock_get):
         """ list_sdbs: Testing that list_sdbs returns the correct SDBs names """
@@ -443,8 +442,8 @@ class TestCerberusClient(unittest.TestCase):
         assert_equals(secret, 'moretopsecretstuff')
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
-            self.cerberus_url + '/v1/secret/fake/path?versionId=CURRENT',
-            headers=self.client.HEADERS
+            self.cerberus_url + '/v1/secret/fake/path',
+            params={'versionId': 'CURRENT'}, headers=self.client.HEADERS
         )
 
     @patch('requests.get')
@@ -467,8 +466,8 @@ class TestCerberusClient(unittest.TestCase):
         assert_equals(secrets['ramen'], 'yuzu')
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
-            self.cerberus_url + '/v1/secret/fake/path?versionId=CURRENT',
-            headers=self.client.HEADERS
+            self.cerberus_url + '/v1/secret/fake/path',
+            params={'versionId': 'CURRENT'}, headers=self.client.HEADERS
         )
 
     @patch('requests.get')
@@ -491,8 +490,8 @@ class TestCerberusClient(unittest.TestCase):
         assert_equals(secrets['ramen'], 'yuzu')
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
-            self.cerberus_url + '/v1/secret/fake/path?versionId=12345',
-            headers=self.client.HEADERS
+            self.cerberus_url + '/v1/secret/fake/path',
+            params={'versionId': '12345'}, headers=self.client.HEADERS
         )
 
 
@@ -528,7 +527,8 @@ class TestCerberusClient(unittest.TestCase):
         assert_equals(secrets['secure_data_version_summaries'][0]['path'], 'fake/path')
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
-            self.cerberus_url + '/v1/secret-versions/fake/path?limit=1&offset=1',
+            self.cerberus_url + '/v1/secret-versions/fake/path',
+            params={'limit': '1', 'offset': '1'},
             headers=self.client.HEADERS
         )
 
