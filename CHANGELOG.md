@@ -1,10 +1,14 @@
 # Changelog / Release Notes
 
 All notable changes to `Cerberus Python Client` will be documented in this file. `Cerberus Python Client` adheres to [Semantic Versioning](http://semver.org/).
+Date format is Day-Month-Year
 
 ### Added
 
-###### 02-06-2018
+###### 04-04-2018
+- Version 0.12.0 - Added support for versioning of secrets in Cerberus.
+
+###### 06-02-2018
 - Fixes to `put_secret` method and updated supported verb as per [Cerberus API Docs](https://github.com/Nike-Inc/cerberus-management-service/blob/master/API.md#createupdate-secrets-at-a-path-post)
 
 ###### 30-11-2017

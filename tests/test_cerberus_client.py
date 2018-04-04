@@ -100,6 +100,71 @@ class TestCerberusClient(unittest.TestCase):
         assert_equals(token, self.client.token)
 
     @patch('requests.get')
+    def test_get_sdbs(self, mock_get):
+        """ get_sdbs: Testing that get_sdbs returns the correct SDBs """
+        sdb_data = [
+            {
+                "id": "5f0-99-414-bc-e5909c",
+                "name": "Disco Events",
+                "path": "app/disco-events/",
+                "category_id": "b07-42d0-e6-9-0a47c03"
+            },
+            {
+                "id": "a7192aa7-83f0-45b7-91fb-f6b0eb",
+                "name": "snowflake",
+                "path": "app/snowflake/",
+                "category_id": "b042d0-e6-90-0aec03"
+            }
+        ]
+
+        mock_get.return_value = self._mock_response(content=json.dumps(sdb_data))
+        sdb_id = self.client.get_sdbs()
+
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v2/safe-deposit-box',
+            headers=self.client.HEADERS
+        )
+
+
+    sdb_data = [
+        {
+            "id": "5f0-99-414-bc-e5909c",
+            "name": "Disco Events",
+            "path": "app/disco-events/",
+            "category_id": "b07-42d0-e6-9-0a47c03"
+        },
+        {
+            "id": "a7192aa7-83f0-45b7-91fb-f6b0eb",
+            "name": "snowflake",
+            "path": "app/snowflake/",
+            "category_id": "b042d0-e6-90-0aec03"
+        }
+    ]
+
+    @patch('requests.get')
+    def test_list_sdbs(self, mock_get):
+        """ list_sdbs: Testing that list_sdbs returns the correct SDBs names """
+        sdb_data = [
+            {
+                "name": "Disco Events"
+            },
+            {
+                "name": "snowflake"
+            }
+        ]
+
+        mock_get.return_value = self._mock_response(content=json.dumps(sdb_data))
+        sdb_id = self.client.list_sdbs()
+
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v2/safe-deposit-box',
+            headers=self.client.HEADERS
+        )
+
+
+    @patch('requests.get')
     def test_get_sdb_id(self, mock_get):
         """ Testing that get_sdb_id returns the correct ID"""
         sdb_data = [
@@ -360,7 +425,7 @@ class TestCerberusClient(unittest.TestCase):
 
     @patch('requests.get')
     def test_getting_a_secret(self, mock_get):
-        """ Testing the correct secret is returned"""
+        """ get_secret: Testing the correct secret is returned"""
         secret_data = {
             "data": {
                 "mykey": "mysecretdata",
@@ -378,12 +443,12 @@ class TestCerberusClient(unittest.TestCase):
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
             self.cerberus_url + '/v1/secret/fake/path',
-            headers=self.client.HEADERS
+            params={'versionId': 'CURRENT'}, headers=self.client.HEADERS
         )
 
     @patch('requests.get')
     def test_getting_secrets_data(self, mock_get):
-        """ Testing the correct secrets are returned"""
+        """ get_secrets_data: Testing the correct secrets are returned"""
         secret_data = {
             "data": {
                 "sushi": "ikenohana",
@@ -402,6 +467,68 @@ class TestCerberusClient(unittest.TestCase):
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
             self.cerberus_url + '/v1/secret/fake/path',
+            params={'versionId': 'CURRENT'}, headers=self.client.HEADERS
+        )
+
+    @patch('requests.get')
+    def test_getting_secrets_data_version(self, mock_get):
+        """ get_secrets_data: Testing the correct secrets are returned when a version is passed """
+        secret_data = {
+            "data": {
+                "sushi": "ikenohana",
+                "ramen": "yuzu"
+            }
+        }
+
+        mock_resp = self._mock_response(content=json.dumps(secret_data))
+        mock_get.return_value = mock_resp
+
+        secrets = self.client.get_secrets_data('fake/path', version='12345')
+
+        # check to make sure we got the right secret
+        assert_equals(secrets['sushi'], 'ikenohana')
+        assert_equals(secrets['ramen'], 'yuzu')
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/secret/fake/path',
+            params={'versionId': '12345'}, headers=self.client.HEADERS
+        )
+
+
+    @patch('requests.get')
+    def test_getting_secret_versions(self, mock_get):
+        """ get_secret_versions: Ensure that the version information of a secret is returned """
+        version_data = {
+					 'has_next': False,
+					 'next_offset': None,
+					 'limit': 1,
+					 'offset': 1,
+					 'version_count_in_result': 1,
+					 'total_version_count': 2,
+					 'secure_data_version_summaries': [{'id': '00000000-0000-0000-0000-000000012345',
+							 'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+							 'path': 'fake/path',
+							 'action': 'UPDATE',
+               'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+               'version_created_ts': '1978-11-27T23:08:14.027Z',
+							 'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+							 'action_ts': '1978-11-27T23:08:14.027Z'}]
+        }
+
+        mock_resp = self._mock_response(content=json.dumps(version_data))
+        mock_get.return_value = mock_resp
+
+        secrets = self.client.get_secret_versions('fake/path', limit=1, offset=1)
+
+        # check to make sure we got the right secret
+        assert_equals(secrets['limit'], 1)
+        assert_equals(secrets['offset'], 1)
+        assert_equals(secrets['secure_data_version_summaries'][0]['id'], '00000000-0000-0000-0000-000000012345')
+        assert_equals(secrets['secure_data_version_summaries'][0]['path'], 'fake/path')
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/secret-versions/fake/path',
+            params={'limit': '1', 'offset': '1'},
             headers=self.client.HEADERS
         )
 
