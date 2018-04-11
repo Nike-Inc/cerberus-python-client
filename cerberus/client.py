@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and* limitations
 """
 
 import requests
-from requests.exceptions import RequestException
 import boto3
 
 from .aws_auth import AWSAuth
 from .user_auth import UserAuth
 from . import CerberusClientException, CLIENT_VERSION
+from .util import throw_if_bad_response
 import ast
 import json
 import warnings
@@ -87,7 +87,7 @@ class CerberusClient(object):
         roles_resp = requests.get(self.cerberus_url + '/v1/role',
                                   headers=self.HEADERS)
 
-        self.throw_if_bad_response(roles_resp)
+        throw_if_bad_response(roles_resp)
         return roles_resp.json()
 
     def get_role(self, key):
@@ -113,7 +113,7 @@ class CerberusClient(object):
         sdb_resp = requests.get(self.cerberus_url + '/v1/category',
                                 headers=self.HEADERS)
 
-        self.throw_if_bad_response(sdb_resp)
+        throw_if_bad_response(sdb_resp)
         return sdb_resp.json()
 
     def create_sdb(self, name, category_id, owner, description="", user_group_permissions=None,
@@ -153,7 +153,7 @@ class CerberusClient(object):
         data = json.encoder.JSONEncoder().encode(temp_data)
         sdb_resp = requests.post(self.cerberus_url + '/v2/safe-deposit-box', data=str(data), headers=self.HEADERS)
 
-        self.throw_if_bad_response(sdb_resp)
+        throw_if_bad_response(sdb_resp)
         return sdb_resp.json()
 
     def delete_sdb(self, sdb_id):
@@ -163,7 +163,7 @@ class CerberusClient(object):
         sdb_id -- this is the id of the safe deposit box, not the path."""
         sdb_resp = requests.delete(self.cerberus_url + '/v2/safe-deposit-box/' + sdb_id,
                                    headers=self.HEADERS)
-        self.throw_if_bad_response(sdb_resp)
+        throw_if_bad_response(sdb_resp)
         return sdb_resp
 
     def get_sdbs(self):
@@ -171,7 +171,7 @@ class CerberusClient(object):
         sdb_resp = requests.get(self.cerberus_url + '/v2/safe-deposit-box',
                                 headers=self.HEADERS)
 
-        self.throw_if_bad_response(sdb_resp)
+        throw_if_bad_response(sdb_resp)
         return sdb_resp.json()
 
     def get_sdb_path(self, sdb):
@@ -182,7 +182,7 @@ class CerberusClient(object):
             headers=self.HEADERS
         )
 
-        self.throw_if_bad_response(sdb_resp)
+        throw_if_bad_response(sdb_resp)
 
         return sdb_resp.json()['path']
 
@@ -193,7 +193,7 @@ class CerberusClient(object):
             headers=self.HEADERS
         )
 
-        self.throw_if_bad_response(list_resp)
+        throw_if_bad_response(list_resp)
 
         return list_resp.json()['data']['keys']
 
@@ -235,7 +235,7 @@ class CerberusClient(object):
         sdb_resp = requests.get(self.cerberus_url + '/v2/safe-deposit-box/' + sdb_id,
                                 headers=self.HEADERS)
 
-        self.throw_if_bad_response(sdb_resp)
+        throw_if_bad_response(sdb_resp)
 
         return sdb_resp.json()
 
@@ -260,7 +260,7 @@ class CerberusClient(object):
         sdb_resp = requests.get(str.join('', [self.cerberus_url, '/v1/sdb-secret-version-paths/', sdb_id]),
                                 headers=self.HEADERS)
 
-        self.throw_if_bad_response(sdb_resp)
+        throw_if_bad_response(sdb_resp)
 
         return sdb_resp.json()
 
@@ -312,14 +312,14 @@ class CerberusClient(object):
         sdb_resp = requests.put(self.cerberus_url + '/v2/safe-deposit-box/' + sdb_id, data=str(data),
                                 headers=self.HEADERS)
 
-        self.throw_if_bad_response(sdb_resp)
+        throw_if_bad_response(sdb_resp)
         return sdb_resp.json()
 
     def delete_secret(self, vault_path):
         """Delete a secret from the given vault path"""
         secret_resp = requests.delete(self.cerberus_url + '/v1/secret/' + vault_path,
                                       headers=self.HEADERS)
-        self.throw_if_bad_response(secret_resp)
+        throw_if_bad_response(secret_resp)
         return secret_resp
 
     def get_secret(self, vault_path, key, version=None):
@@ -357,7 +357,7 @@ class CerberusClient(object):
         secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret/',vault_path]),
                                    params=payload, headers=self.HEADERS)
 
-        self.throw_if_bad_response(secret_resp)
+        throw_if_bad_response(secret_resp)
 
         return secret_resp.json()
 
@@ -411,7 +411,7 @@ class CerberusClient(object):
         payload = {'limit': str(limit), 'offset': str(offset)}
         secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret-versions/', vault_path]),
                                    params=payload, headers=self.HEADERS)
-        self.throw_if_bad_response(secret_resp)
+        throw_if_bad_response(secret_resp)
         return secret_resp.json()
     
     def _get_all_secret_version_ids(self, vault_path, limit=None):
@@ -448,7 +448,7 @@ class CerberusClient(object):
         vault_path = self._add_slash(vault_path)
         secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path + '?list=true',
                                    headers=self.HEADERS)
-        self.throw_if_bad_response(secret_resp)
+        throw_if_bad_response(secret_resp)
         return secret_resp.json()
 
     def put_secret(self, vault_path, secret, merge=True):
@@ -469,7 +469,7 @@ class CerberusClient(object):
             data = self.secret_merge(vault_path, secret)
         secret_resp = requests.post(self.cerberus_url + '/v1/secret/' + vault_path,
                                     data=str(data), headers=self.HEADERS)
-        self.throw_if_bad_response(secret_resp)
+        throw_if_bad_response(secret_resp)
         return secret_resp
 
     def secret_merge(self, vault_path, key):
@@ -478,7 +478,7 @@ class CerberusClient(object):
         temp_key = {}
         # Ignore a return of 404 since it means the key might not exist
         if get_resp.status_code == requests.codes.bad and get_resp.status_code not in [403, 404]:
-            self.throw_if_bad_response(get_resp)
+            throw_if_bad_response(get_resp)
         elif get_resp.status_code in [403, 404]:
             temp_key = {}
         else:
@@ -493,10 +493,3 @@ class CerberusClient(object):
         # unicode stings as the payload.
         combined_key = json.encoder.JSONEncoder().encode(temp_key)
         return combined_key
-
-    def throw_if_bad_response(self, response):
-        """Throw an exception if the Cerberus response is not successful."""
-        try:
-            response.raise_for_status()
-        except RequestException as e:
-            raise CerberusClientException(str(e))

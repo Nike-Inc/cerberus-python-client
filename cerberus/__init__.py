@@ -1,4 +1,4 @@
-__all__ = ['client', 'user_auth', 'aws_auth']
+__all__ = ['client', 'user_auth', 'aws_auth', 'util']
 
 CLIENT_VERSION = '0.12.0'
 
