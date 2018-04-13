@@ -124,6 +124,7 @@ class TestUserAuth(object):
     @patch('requests.get')
     def test_when_not_200_status_code(self, mock_get):
         """ test when 200 status code is not returned"""
-        mock_resp = self._mock_response(status=404, reason='Not Found')
+        data = json.dumps({"error_id": "123", "errors": []})
+        mock_resp = self._mock_response(status=404, reason='Not Found', content=data)
         mock_get.return_value = mock_resp
         self.client.get_auth()
