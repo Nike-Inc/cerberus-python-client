@@ -14,22 +14,26 @@ See the License for the specific language governing permissions and* limitations
 """
 
 import requests
+from . import CLIENT_VERSION
 
 
 class UserAuth(object):
     """Class to authenticate with username and password and returns vault token"""
-    HEADERS = {"Content-Type": "application/json"}
+    HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
 
     def __init__(self, cerberus_url, username, password):
         self.cerberus_url = cerberus_url
         self.username = username
         self.password = password
 
+
     def get_auth(self):
         """Returns auth response which has client token unless MFA is required"""
         auth_resp = requests.get(self.cerberus_url + '/v2/auth/user',
-                                 auth=(self.username, self.password))
+                                 auth=(self.username, self.password),
+                                 headers=self.HEADERS)
 
+        # print(self.HEADERS)
         if auth_resp.status_code != 200:
             auth_resp.raise_for_status()
 

@@ -20,9 +20,10 @@ import unittest
 
 import boto3
 import requests
-from mock import patch
+from mock import patch, ANY
 from moto import mock_kms
 from moto import mock_sts
+from .matcher import AnyDictWithKey
 
 from cerberus.aws_auth import AWSAuth
 
@@ -86,7 +87,9 @@ class TestAWSAuth(unittest.TestCase):
 
         # Test the AWSAuth client leveraging default role ARN and region detection...
         auth_client = AWSAuth("https://cerberus.fake.com", region='us-east-1')
+        mock_post.reset_mock()
         token = auth_client.get_token()
+        mock_post.assert_called_once_with(ANY, data=ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
         self.assertEqual(token, response_body['client_token'])
         self.assertEqual(auth_client.role_arn, "arn:aws:iam::123:role/rolepath/rolename")
 
@@ -96,5 +99,7 @@ class TestAWSAuth(unittest.TestCase):
         auth_client = AWSAuth("https://cerberus.fake.com", test_principal_arn, "us-east-1")
         self.assertEqual(auth_client.role_arn, test_principal_arn)
 
+        mock_post.reset_mock()
         token = auth_client.get_token()
+        mock_post.assert_called_once_with(ANY, data=ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
         self.assertEqual(token, response_body['client_token'])

@@ -20,8 +20,9 @@ import unittest
 
 import requests
 import mock
-from mock import patch
+from mock import patch, ANY
 from nose.tools import assert_equals, assert_in
+from .matcher import AnyDictWithKey
 
 from cerberus import CerberusClientException
 from cerberus.client import CerberusClient
@@ -569,3 +570,8 @@ class TestCerberusClient(unittest.TestCase):
         mget.return_value = self._mock_response(content=json.dumps(data))
         with self.assertRaises(CerberusClientException):
             self.client.get_sdb_id('not_found')
+
+    @patch('requests.get')
+    def test_request_headers_has_client_version(self, mget):
+        self.client.list_roles()
+        mget.assert_called_with(ANY, headers=AnyDictWithKey('X-Cerberus-Client'))

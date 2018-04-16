@@ -20,12 +20,16 @@ import re
 import boto3
 import requests
 
+from . import CLIENT_VERSION
+
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
     cerberus_url = None
     role_arn = None
     region = None
     assume_role = False
+
+    HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
 
     def __init__(self, cerberus_url, role_arn=None, region=None, assume_role=True):
         self.cerberus_url = cerberus_url
@@ -107,7 +111,8 @@ class AWSAuth(object):
             'iam_principal_arn': self.role_arn,
             'region': self.region
         }
-        encrypted_resp = requests.post(self.cerberus_url + '/v2/auth/iam-principal', data=json.dumps(request_body))
+        encrypted_resp = requests.post(self.cerberus_url + '/v2/auth/iam-principal', data=json.dumps(request_body),
+                                       headers=self.HEADERS)
 
         if encrypted_resp.status_code != 200:
             encrypted_resp.raise_for_status()
