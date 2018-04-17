@@ -20,6 +20,8 @@ import re
 import boto3
 import requests
 
+from .util import throw_if_bad_response
+
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
     cerberus_url = None
@@ -110,7 +112,7 @@ class AWSAuth(object):
         encrypted_resp = requests.post(self.cerberus_url + '/v2/auth/iam-principal', data=json.dumps(request_body))
 
         if encrypted_resp.status_code != 200:
-            encrypted_resp.raise_for_status()
+            throw_if_bad_response(encrypted_resp)
 
         auth_data = encrypted_resp.json()['auth_data']
         if not self.assume_role:

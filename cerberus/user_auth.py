@@ -15,6 +15,8 @@ See the License for the specific language governing permissions and* limitations
 
 import requests
 
+from .util import throw_if_bad_response
+
 
 class UserAuth(object):
     """Class to authenticate with username and password and returns vault token"""
@@ -31,7 +33,7 @@ class UserAuth(object):
                                  auth=(self.username, self.password))
 
         if auth_resp.status_code != 200:
-            auth_resp.raise_for_status()
+            throw_if_bad_response(auth_resp)
 
         return auth_resp.json()
 
@@ -60,6 +62,6 @@ class UserAuth(object):
         )
 
         if mfa_resp.status_code != 200:
-            mfa_resp.raise_for_status()
+            throw_if_bad_response(mfa_resp)
 
         return mfa_resp.json()

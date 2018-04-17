@@ -536,7 +536,8 @@ class TestCerberusClient(unittest.TestCase):
     @patch('requests.get')
     def test_get_secrets_invalid_path(self, mget):
         """ Ensure that a Cerberus exception is raised if the path is invalid. """
-        mget.return_value = self._mock_response(status=401)
+        data = json.dumps({"error_id": "123", "errors": []})
+        mget.return_value = self._mock_response(status=401, content=data)
         with self.assertRaises(CerberusClientException):
             self.client.get_secrets('this/path/does/not/exist')
 
@@ -551,7 +552,8 @@ class TestCerberusClient(unittest.TestCase):
     @patch('requests.get')
     def test_get_sdb_id_invalid_response(self, mget):
         """ Ensure a Cerberus exception is raised if the sdb request failed. """
-        mget.return_value = self._mock_response(status=401)
+        data = json.dumps({"error_id": "123", "errors": []})
+        mget.return_value = self._mock_response(status=401, content=data)
         with self.assertRaises(CerberusClientException):
             self.client.get_sdb_id('some_id')
 
