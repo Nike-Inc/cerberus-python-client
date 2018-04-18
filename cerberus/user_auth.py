@@ -33,7 +33,6 @@ class UserAuth(object):
                                  auth=(self.username, self.password),
                                  headers=self.HEADERS)
 
-        # print(self.HEADERS)
         if auth_resp.status_code != 200:
             auth_resp.raise_for_status()
 
