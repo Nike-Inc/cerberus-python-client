@@ -21,6 +21,7 @@ import boto3
 import requests
 
 from . import CLIENT_VERSION
+from .util import throw_if_bad_response
 
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
@@ -115,7 +116,7 @@ class AWSAuth(object):
                                        headers=self.HEADERS)
 
         if encrypted_resp.status_code != 200:
-            encrypted_resp.raise_for_status()
+            throw_if_bad_response(encrypted_resp)
 
         auth_data = encrypted_resp.json()['auth_data']
         if not self.assume_role:

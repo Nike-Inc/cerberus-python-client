@@ -18,7 +18,7 @@ import json
 import sys
 
 import requests
-from requests.exceptions import HTTPError
+from cerberus import CerberusClientException
 from mock import patch
 from nose.tools import raises, assert_equals, assert_dict_equal
 
@@ -120,10 +120,11 @@ class TestUserAuth(object):
         # confirm the json matches
         assert_dict_equal(response, mfa_data)
 
-    @raises(HTTPError)
+    @raises(CerberusClientException)
     @patch('requests.get')
     def test_when_not_200_status_code(self, mock_get):
         """ test when 200 status code is not returned"""
-        mock_resp = self._mock_response(status=404, reason='Not Found')
+        data = json.dumps({"error_id": "123", "errors": []})
+        mock_resp = self._mock_response(status=404, reason='Not Found', content=data)
         mock_get.return_value = mock_resp
         self.client.get_auth()
