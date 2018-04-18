@@ -572,6 +572,15 @@ class TestCerberusClient(unittest.TestCase):
             self.client.get_sdb_id('not_found')
 
     @patch('requests.get')
-    def test_request_headers_has_client_version(self, mget):
-        self.client.list_roles()
-        mget.assert_called_with(ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
+    def test_request_headers_has_client_version(self, mock_get):
+        secret_data = {
+            "data": {
+                "sushi": "ikenohana",
+                "ramen": "yuzu"
+            }
+        }
+
+        mock_resp = self._mock_response(content=json.dumps(secret_data))
+        mock_get.return_value = mock_resp
+        self.client.get_secrets_data("fake/path", "ramen")
+        mock_get.assert_called_with(ANY, headers=AnyDictWithKey('X-Cerberus-Client'), params=ANY)
