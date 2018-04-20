@@ -23,6 +23,7 @@ from .util import throw_if_bad_response
 import ast
 import json
 import warnings
+import os
 
 
 class CerberusClient(object):
@@ -31,18 +32,18 @@ class CerberusClient(object):
         via the Auth Classes"""
     HEADERS = {'Content-Type': 'application/json'}
 
-    def __init__(self, cerberus_url, username=None, password=None, role_arn=None, region=None, assume_role=True, lambda_context=None):
+    def __init__(self, cerberus_url, username=None, password=None, role_arn=None, region=None, assume_role=True, lambda_context=None, token=None):
         """Username and password are optional, they are not needed for IAM Role Auth"""
         self.cerberus_url = cerberus_url
         self.username = username or ""
         self.password = password or ""
         self.role_arn = role_arn
         self.region = region
-        self.token = None
+        self.token = token
         self.assume_role = assume_role
-        if lambda_context is not None:
-            self.set_lambda_context(lambda_context)
-        self.set_token()
+        self.lambda_context = lambda_context
+        if self.token is None:
+            self.set_token()
 
         self.HEADERS['X-Vault-Token'] = self.token
         self.HEADERS['X-Cerberus-Client'] = 'CerberusPythonClient/' + CLIENT_VERSION
@@ -53,8 +54,8 @@ class CerberusClient(object):
             return str.join('', [string, '/'])
         return str(string)
 
-    def set_lambda_context(self, lambda_context):
-        invoked_function_arn = lambda_context.invoked_function_arn
+    def set_lambda_context(self):
+        invoked_function_arn = self.lambda_context.invoked_function_arn
         # A function arn looks like this: 'arn:aws:lambda:us-west-1:292800423415::function:foo:1'.
         # The '1' at the end (the qualifier) is optional
         arn = invoked_function_arn.split(':')
@@ -68,10 +69,18 @@ class CerberusClient(object):
 
     def set_token(self):
         """Set the Vault token based on auth type"""
+        try:
+            self.token = os.environ['CERBERUS_TOKEN']
+            print("Overriding Cerberus token with environment variable.")
+            return
+        except:
+            pass
         if self.username:
             ua = UserAuth(self.cerberus_url, self.username, self.password)
             self.token = ua.get_token()
         else:
+            if self.lambda_context is not None:
+                self.set_lambda_context()
             awsa = AWSAuth(self.cerberus_url, role_arn=self.role_arn, region=self.region, assume_role=self.assume_role)
             self.token = awsa.get_token()
 

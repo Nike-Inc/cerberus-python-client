@@ -586,3 +586,32 @@ class TestCerberusClient(unittest.TestCase):
         mock_get.return_value = mock_resp
         self.client.get_secrets_data("fake/path", "ramen")
         mock_get.assert_called_with(ANY, headers=AnyDictWithKey('X-Cerberus-Client'), params=ANY)
+
+    @patch.dict('os.environ', {"CERBERUS_TOKEN": "dashboardtoken"})
+    def test_environment_variable_overrides_user_auth(self):
+        anotherClient = CerberusClient(
+            self.cerberus_url,
+            'testuser', 'hardtoguesspasswd'
+        )
+        assert_equals(anotherClient.get_token(), "dashboardtoken")
+
+    @patch.dict('os.environ', {"CERBERUS_TOKEN": "dashboardtoken"})
+    def test_environment_variable_overrides_default_auth(self):
+        anotherClient = CerberusClient(
+            self.cerberus_url
+        )
+        assert_equals(anotherClient.get_token(), "dashboardtoken")
+
+    @patch.dict('os.environ', {"CERBERUS_TOKEN": "dashboardtoken"})
+    def test_environment_variable_overrides_lambda_context(self):
+        anotherClient = CerberusClient(
+            self.cerberus_url, lambda_context="whatever object"
+        )
+        assert_equals(anotherClient.get_token(), "dashboardtoken")
+
+    @patch.dict('os.environ', {"CERBERUS_TOKEN": "dashboardtoken"})
+    def test_environment_variable_does_not_overrides_token_parameter(self):
+        anotherClient = CerberusClient(
+            self.cerberus_url, token="overridetoken"
+        )
+        assert_equals(anotherClient.get_token(), "overridetoken")
