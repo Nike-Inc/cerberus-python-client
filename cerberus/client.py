@@ -43,7 +43,7 @@ class CerberusClient(object):
         self.assume_role = assume_role
         self.lambda_context = lambda_context
         if self.token is None:
-            self.set_token()
+            self._set_token()
 
         self.HEADERS['X-Vault-Token'] = self.token
         self.HEADERS['X-Cerberus-Client'] = 'CerberusPythonClient/' + CLIENT_VERSION
@@ -54,7 +54,7 @@ class CerberusClient(object):
             return str.join('', [string, '/'])
         return str(string)
 
-    def set_lambda_context(self):
+    def _set_lambda_context(self):
         invoked_function_arn = self.lambda_context.invoked_function_arn
         # A function arn looks like this: 'arn:aws:lambda:us-west-1:292800423415::function:foo:1'.
         # The '1' at the end (the qualifier) is optional
@@ -67,7 +67,7 @@ class CerberusClient(object):
         self.role_arn = response['Role']
         self.assume_role = False
 
-    def set_token(self):
+    def _set_token(self):
         """Set the Cerberus token based on auth type"""
         try:
             self.token = os.environ['CERBERUS_TOKEN']
@@ -80,7 +80,7 @@ class CerberusClient(object):
             self.token = ua.get_token()
         else:
             if self.lambda_context is not None:
-                self.set_lambda_context()
+                self._set_lambda_context()
             awsa = AWSAuth(self.cerberus_url, role_arn=self.role_arn, region=self.region, assume_role=self.assume_role)
             self.token = awsa.get_token()
 

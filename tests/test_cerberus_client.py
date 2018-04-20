@@ -30,7 +30,7 @@ from cerberus.client import CerberusClient
 
 class TestCerberusClient(unittest.TestCase):
     """Class to test the cerberus client. Mock is used to mock external calls"""
-    @patch('cerberus.client.CerberusClient.set_token', return_value='1234-asdf-1234hy-qwer6')
+    @patch('cerberus.client.CerberusClient._set_token', return_value='1234-asdf-1234hy-qwer6')
     def setUp(self, *args):
         self.cerberus_url = "https://cerberus.fake.com"
         self.client = CerberusClient(
