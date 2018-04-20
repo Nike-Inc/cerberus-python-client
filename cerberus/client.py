@@ -68,7 +68,7 @@ class CerberusClient(object):
         self.assume_role = False
 
     def set_token(self):
-        """Set the Vault token based on auth type"""
+        """Set the Cerberus token based on auth type"""
         try:
             self.token = os.environ['CERBERUS_TOKEN']
             print("Overriding Cerberus token with environment variable.")
