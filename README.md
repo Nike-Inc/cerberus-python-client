@@ -209,7 +209,7 @@ token = UserAuth('https://my.cerberus.url', 'username', 'password').get_token()'
 Generally it does NOT make sense to store Lambda secrets in Cerberus for two reasons:
 
 1. Cerberus cannot support the scale that lambdas may need, e.g. thousands of requests per second
-1. Lambdas will not want the extra latency needed to authenticate and read from Cerberus
+2. Lambdas will not want the extra latency needed to authenticate and read from Cerberus
 
 A better solution for Lambda secrets is using the [encrypted environmental variables](http://docs.aws.amazon.com/lambda/latest/dg/env_variables.html) 
 feature provided by AWS.
@@ -240,6 +240,7 @@ The IAM role assigned to the Lambda function must contain the following policy s
 ```
 
 #### Lambda examples
+
 Get secrets from Cerberus using IAM Role (execution role) ARN. It's a good idea to cache the secrets since AWS reuses Lambda instances.
 ```python
 import os
@@ -268,6 +269,30 @@ You can run all the unit tests using nosetests. Most of the tests are mocked.
 ```bash
 $ nosetests --verbosity=2 tests/
 ```
+
+
+## Local Development
+
+There are many ways to authenticate with Cerberus and they don't always work on local. Luckily you can easily get a token from the dashboard and export it to your environment variables. Doing so will override the authentication mechanism that's set in place. For example:
+```python
+from cerberus.client import CerberusClient
+client = CerberusClient('https://dev.cerberus.nikecloud.com') # This will fail on local when it tries to call the metadata endpoint.
+```
+Without changing any code, you can do:
+```bash
+$ export CERBERUS_TOKEN='mytoken'
+```
+```python
+from cerberus.client import CerberusClient
+client = CerberusClient('https://dev.cerberus.nikecloud.com') # On local, the client will pick up the environment variable that was set earlier. When it's deployed to an EC2 instance, it'll automatically switch to authenticating using the metadata endpoint.
+```
+Alternatively, you can pass in the token directly.
+```python
+from cerberus.client import CerberusClient
+client = CerberusClient('https://dev.cerberus.nikecloud.com', token='mytoken')
+```
+Refer to the "local development" section at [Quick Start](http://engineering.nike.com/cerberus/docs/user-guide/quick-start) if you're having trouble getting a token.
+
 
 ## Maintenance
 This project is maintained by Ann Wallace `ann.wallace@nike.com`
