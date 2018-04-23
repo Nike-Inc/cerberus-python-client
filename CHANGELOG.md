@@ -5,6 +5,11 @@ Date format is Day-Month-Year
 
 ### Added
 
+###### 23-04-2018
+- Version 1.0.0 - Add token parameter to override all other auth methods 
+- Fix issue where the client version is not included in the HTTP head
+- Prints useful error message when Cerberus call fails
+
 ###### 04-04-2018
 - Version 0.12.0 - Added support for versioning of secrets in Cerberus.
 
