@@ -240,6 +240,7 @@ The IAM role assigned to the Lambda function must contain the following policy s
 ```
 
 #### Lambda examples
+
 Get secrets from Cerberus using IAM Role (execution role) ARN. It's a good idea to cache the secrets since AWS reuses Lambda instances.
 ```python
 import os
@@ -268,6 +269,30 @@ You can run all the unit tests using nosetests. Most of the tests are mocked.
 ```bash
 $ nosetests --verbosity=2 tests/
 ```
+
+
+## Local Development
+
+The easiest way to locally test the Python client is to first authenticate with Cerberus through the dashboard, then use your dashboard authentication token to make subsequent calls. See examples below.
+```python
+from cerberus.client import CerberusClient
+client = CerberusClient('https://dev.cerberus.nikecloud.com') # This will work on an EC2 instance. But it will fail on local when it tries to call the metadata endpoint.
+```
+Without changing any code, set the `CERBERUS_TOKEN` system environment variable:
+```bash
+$ export CERBERUS_TOKEN='mytoken'
+```
+```python
+from cerberus.client import CerberusClient
+client = CerberusClient('https://dev.cerberus.nikecloud.com') # On local, the client will pick up the environment variable that was set earlier. When it's deployed to an EC2 instance that doesn't have the `CERBERUS_TOKEN` system environment variable, it'll automatically switch to authenticating using the metadata endpoint.
+```
+Alternatively, you can pass in the token directly.
+```python
+from cerberus.client import CerberusClient
+client = CerberusClient('https://dev.cerberus.nikecloud.com', token='mytoken')
+```
+Refer to the "local development" section at [Quick Start](http://engineering.nike.com/cerberus/docs/user-guide/quick-start) if you're having trouble getting a token.
+
 
 ## Maintenance
 This project is maintained by Ann Wallace `ann.wallace@nike.com`
