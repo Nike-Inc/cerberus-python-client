@@ -284,7 +284,7 @@ $ export CERBERUS_TOKEN='mytoken'
 ```
 ```python
 from cerberus.client import CerberusClient
-client = CerberusClient('https://dev.cerberus.nikecloud.com') # On local, the client will pick up the environment variable that was set earlier. When it's deployed to an EC2 instance, it'll automatically switch to authenticating using the metadata endpoint.
+client = CerberusClient('https://dev.cerberus.nikecloud.com') # On local, the client will pick up the environment variable that was set earlier. When it's deployed to an EC2 instance that doesn't have the `CERBERUS_TOKEN` system environment variable, it'll automatically switch to authenticating using the metadata endpoint.
 ```
 Alternatively, you can pass in the token directly.
 ```python
