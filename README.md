@@ -273,12 +273,12 @@ $ nosetests --verbosity=2 tests/
 
 ## Local Development
 
-There are many ways to authenticate with Cerberus and they don't always work on local. Luckily you can easily get a token from the dashboard and export it to your environment variables. Doing so will override the authentication mechanism that's set in place. For example:
+The easiest way to locally test the Python client is to first authenticate with Cerberus through the dashboard, then use your dashboard authentication token to make subsequent calls. See examples below.
 ```python
 from cerberus.client import CerberusClient
-client = CerberusClient('https://dev.cerberus.nikecloud.com') # This will fail on local when it tries to call the metadata endpoint.
+client = CerberusClient('https://dev.cerberus.nikecloud.com') # This will work on an EC2 instance. But it will fail on local when it tries to call the metadata endpoint.
 ```
-Without changing any code, you can do:
+Without changing any code, set the `CERBERUS_TOKEN` system environment variable:
 ```bash
 $ export CERBERUS_TOKEN='mytoken'
 ```
