@@ -324,6 +324,164 @@ class CerberusClient(object):
         throw_if_bad_response(sdb_resp)
         return sdb_resp.json()
 
+###------ Files ------###
+    def delete_file(self, vault_path):
+        """Delete a secret from the given vault path"""
+        secret_resp = requests.delete(self.cerberus_url + '/v1/secure-file/' + vault_path,
+                                      headers=self.HEADERS)
+        throw_if_bad_response(secret_resp)
+        return secret_resp
+
+    def get_file_metadata(self, vault_path, version=None):
+        if not version:
+            version = "CURRENT"
+
+        payload={'versionId': str(version)}
+        secret_resp = requests.head(str.join('', [self.cerberus_url, '/v1/secure-file/',vault_path]),
+                                   params=payload, headers=self.HEADERS)
+
+        throw_if_bad_response(secret_resp)
+
+        return secret_resp.headers
+
+    def _get_files(self, vault_path, version=None):
+        """
+        Return the file stored at the vault_path
+        Keyword arguments:
+
+            vault_path (string) -- full path in the secret deposit box that contains the key
+                                   /shared/sdb-path/secret
+        """
+        if not version:
+          version = "CURRENT"
+
+        payload={'versionId': str(version)}
+        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secure-file/',vault_path]),
+                                   params=payload, headers=self.HEADERS)
+
+        throw_if_bad_response(secret_resp)
+
+        return secret_resp
+
+    def _parse_metadata_filename(self, metadata):
+      """
+      Parse the header metadata to pull out the filename and then store it under the key 'filename'
+      """
+      index = metadata['Content-Disposition'].index('=')+1
+      metadata['filename'] = metadata['Content-Disposition'][index:].replace('"','')
+      return metadata
+      
+
+    def get_file(self, vault_path, version=None):
+        """
+        Return a requests.structures.CaseInsensitiveDict object containing a file and the metadata/header information around it.
+        The binary data of the file is under the key 'data'
+        """
+
+        query = self._get_files(vault_path, version)
+        resp = query.headers.copy()
+        resp = self._parse_metadata_filename(resp)
+        resp['data'] = query.content
+
+        return resp
+
+    def get_file_data(self, vault_path, version=None):
+        """
+        Return the data of a file stored at the vault_path
+        This only returns the file data, and does not include any of the meta information stored with it.
+
+        Keyword arguments:
+
+            vault_path (string) -- full path in the secret deposit box that contains the file key
+        """
+        return self._get_files(vault_path, version).content
+
+    def get_file_versions(self, vault_path, limit=None, offset=None):
+        """
+        Get verions of a particular secret key
+        This is just a shim to get_secret_versions
+
+        vault_path -- full path to the key in the safety deposit box
+        limit -- Default(100), limits how many records to be returned from the api at once.
+        offset -- Default(0), used for pagination.  Will request records from the given offset.
+        """
+
+        return self.get_secret_versions(vault_path, limit, offset)
+    
+    def _get_all_file_version_ids(self, vault_path, limit=None):
+        """
+        Convience function that returns a generator that will paginate over the secret version ids
+        vault_path -- full path to the key in the safety deposit box
+        limit -- Default(100), limits how many records to be returned from the api at once.
+        """
+        
+        offset = 0
+        # Prime the versions dictionary so that all the logic can happen in the loop
+        versions = {'has_next': True, 'next_offset': 0}
+        while (versions['has_next']):
+            offset = versions['next_offset']
+            versions = self.get_file_versions(vault_path, limit, offset)
+            for summary in versions['secure_data_version_summaries']:
+                yield summary
+
+    def _get_all_file_versions(self, vault_path, limit=None):
+        """
+        Convience function that returns a generator yielding the contents of secrets and their version info
+        vault_path -- full path to the key in the safety deposit box
+        limit -- Default(100), limits how many records to be returned from the api at once.
+        """
+        for secret in self._get_all_file_version_ids(vault_path, limit):
+            yield {'secret': self.get_file_data(vault_path, version=secret['id']),
+                   'version': secret}
+
+    def list_files(self, vault_path, limit=None, offset=None):
+        """Return the list of files in the path.  May need to be paginated"""
+
+        # Make sure that limit and offset are in range.
+        # Set the normal defaults
+        if not limit or limit <=0:
+            limit = 100
+
+        if not offset or offset <0:
+            offset = 0
+
+        payload = {'limit': str(limit), 'offset': str(offset)}
+
+        # Because of the addition of versionId and the way URLs are constructed, vault_path should
+        #  always end in a '/'.
+        vault_path = self._add_slash(vault_path)
+        secret_resp = requests.get(self.cerberus_url + '/v1/secure-files/' + vault_path,
+                                   params=payload, headers=self.HEADERS)
+        throw_if_bad_response(secret_resp)
+        return secret_resp.json()
+
+    def put_file(self, vault_path, filename, filehandle, content_type=None):
+        """Write secret(s) to a vault_path provided a dictionary of key/values
+
+        Keyword arguments:
+        vault_path -- full path in the safety deposit box that contains the key to store things under
+        filename -- name to store the file as in cerberus.  (This can be differnt than the full path)
+        filehandle -- Pass an opened filehandle to the file you want to upload.
+           Make sure that the file was opened in binary mode, otherwise the size calculations
+           can be off for text files.
+        content_type -- Optional.  Set the Mime type of the file you're uploading.
+        """
+
+        if content_type:
+          data = {'file-content': (filename, filehandle, content_type)}
+        else:
+          data = {'file-content': (filename, filehandle)}
+
+        headers = self.HEADERS.copy()
+        if 'Content-Type' in headers:
+          headers.__delitem__('Content-Type')
+
+        secret_resp = requests.post(self.cerberus_url + '/v1/secure-file/' + vault_path,
+                                    files=data, headers=headers)
+        throw_if_bad_response(secret_resp)
+        return secret_resp
+
+###------ Secrets -----####
     def delete_secret(self, secure_data_path):
         """Delete a secret from the given secure data path"""
         secret_resp = requests.delete(self.cerberus_url + '/v1/secret/' + secure_data_path,
@@ -403,18 +561,11 @@ class CerberusClient(object):
         """
 
         # Make sure that limit and offset are in range.
-        # Setting to None so that they defaults take over.
-        if limit <= 0:
-            limit = None
-
-        if offset <0:
-            offset = None
-
         # Set the normal defaults
-        if not limit:
+        if not limit or limit <=0:
             limit = 100
 
-        if not offset:
+        if not offset or offset <0:
             offset = 0
 
         payload = {'limit': str(limit), 'offset': str(offset)}

@@ -71,6 +71,16 @@ class TestCerberusClient(unittest.TestCase):
                     'last_updated_ts': '1974-11-17T00:02:30Z',
                     'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'}],
         }
+        self.file_data = {
+            'Date': 'Sun, 17 November 1974 00:02:30 GMT',
+            'Content-Type': 'image/png; charset=UTF-8',
+            'Content-Length': '237',
+            'Connection': 'keep-alive',
+            'Content-Disposition': 'attachment; filename="test.png"',
+            'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+            'X-B3-TraceId': 'fa533432fe425da9',
+            'filename': 'test.png',
+            'data': '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x12\x00\x00\x00\x07\x08\x06\x00\x00\x00\x05\xd5\x1d\x7f\x00\x00\x00\x06bKGD\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xe2\x05\t\x16(\n\x87\x93H\xa5\x00\x00\x00\x19tEXtComment\x00Created with GIMPW\x81\x0e\x17\x00\x00\x00UIDAT\x18\xd3\x9d\x90A\n\xc0@\x08\x03\'e\xff\xff\xe5\xf4R\x8bX\xa5\xcbzs\xd0\x10F\xb6-\t\xdb\x9cL\xfc\nx\x13"L\x12\x95u<\xef+@\x0e\xa9\xcf\xf5\xa6\xe3k\xaa[\'7\xb0\xfdQ\xd1\x06M\xbe\xa6\xd6\x00\xd7\x8e\xcc??\x00\xf2\x13]=\xed\xc8\xce\xfc\x06\x0f\xbfK\x06s\xd8\x7f\x99\x00\x00\x00\x00IEND\xaeB`\x82'}
 
     @staticmethod
     def _mock_response(status=200, reason='OK', content=''):
@@ -424,6 +434,161 @@ class TestCerberusClient(unittest.TestCase):
             headers=self.client.HEADERS
         )
 
+## ---- files ----
+    @patch('requests.get')
+    def test_list_files(self, mock_get):
+        """ Testing that list_files returns the correct files """
+        list_data = {
+            'has_next': False,
+            'next_offset': None,
+            'limit': 100,
+            'offset': 0,
+            'file_count_in_result': 3,
+            'total_file_count': 3,
+            'secure_file_summaries': [{'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                'path': 'studio54/test.py',
+                'size_in_bytes': 1323,
+                'name': 'test.py',
+                'created_by': 'tester@studio54.com',
+                'created_ts': '1974-11-17T00:02:30Z',
+                'last_updated_by': 'tester@studio54.com',
+                'last_updated_ts': '1974-11-17T00:02:30Z'},
+                {'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                'path': 'studio54/test.gif',
+                'size_in_bytes': 686,
+                'name': 'test.gif',
+                'created_by': 'tester@studio54.com',
+                'created_ts': '1974-11-17T00:02:30Z',
+                'last_updated_by': 'tester@studio54.com',
+                'last_updated_ts': '1974-11-17T00:02:30Z'},
+                {'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                'path': 'studio54/5621.gif',
+                'size_in_bytes': 686,
+                'name': '5621.gif',
+                'created_by': 'tester@studio54.com',
+                'created_ts': '1974-11-17T00:02:30Z',
+                'last_updated_by': 'tester@studio54.com',
+                'last_updated_ts': '1974-11-17T00:02:30Z'}]
+        }
+
+        payload = {'limit': '100', 'offset': '0'}
+        mock_resp = self._mock_response(content=json.dumps(list_data))
+        mock_get.return_value = mock_resp
+
+        keys = self.client.list_files('fake/path')
+
+        assert_equals(keys['limit'], 100)
+        assert_equals(keys['offset'], 0)
+        assert_equals(keys, list_data)
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/secure-files/fake/path/',
+            params=payload,headers=self.client.HEADERS
+        )
+
+
+    @patch('cerberus.client.CerberusClient._parse_metadata_filename')
+    @patch('requests.get')
+    def test_getting_a_file(self, mock_get,mock_parse):
+        """ get_file: Testing the correct file is returned"""
+        file_data = {
+            'Date': 'Sun, 17 November 1974 00:02:30 GMT',
+            'Content-Type': 'image/png; charset=UTF-8',
+            'Content-Length': '237',
+            'Connection': 'keep-alive',
+            'Content-Disposition': 'attachment; filename="test.png"',
+            'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+            'X-B3-TraceId': 'fa533432fe425da9',
+            'filename': 'test.png',
+            'data': '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x12\x00\x00\x00\x07\x08\x06\x00\x00\x00\x05\xd5\x1d\x7f\x00\x00\x00\x06bKGD\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xe2\x05\t\x16(\n\x87\x93H\xa5\x00\x00\x00\x19tEXtComment\x00Created with GIMPW\x81\x0e\x17\x00\x00\x00UIDAT\x18\xd3\x9d\x90A\n\xc0@\x08\x03\'e\xff\xff\xe5\xf4R\x8bX\xa5\xcbzs\xd0\x10F\xb6-\t\xdb\x9cL\xfc\nx\x13"L\x12\x95u<\xef+@\x0e\xa9\xcf\xf5\xa6\xe3k\xaa[\'7\xb0\xfdQ\xd1\x06M\xbe\xa6\xd6\x00\xd7\x8e\xcc??\x00\xf2\x13]=\xed\xc8\xce\xfc\x06\x0f\xbfK\x06s\xd8\x7f\x99\x00\x00\x00\x00IEND\xaeB`\x82'}
+        
+        mock_parse.return_value=self.file_data
+        mock_resp = self._mock_response(content=json.dumps(self.file_data))
+        mock_get.return_value = mock_resp
+
+        secret_file = self.client.get_file('fake/path/test.png')
+
+        # check to make sure we got the right file
+        #assert_equals(secret_file, file_data)
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/secure-file/fake/path/test.png',
+            params={'versionId': 'CURRENT'}, headers=self.client.HEADERS
+        )
+
+    @patch('requests.get')
+    def test_getting_file_data(self, mock_get):
+        """ get_file_data: Testing the correct file data is returned"""
+
+        mock_resp = self._mock_response(content=self.file_data['data'])
+        mock_get.return_value = mock_resp
+
+        secret_file = self.client.get_file_data('fake/path/test.png')
+
+        # check to make sure we got the right file
+        #assert_equals(secret_file, self.file_data['data'])
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/secure-file/fake/path/test.png',
+            params={'versionId': 'CURRENT'}, headers=self.client.HEADERS
+        )
+
+    @patch('requests.get')
+    def test_getting_files_data_version(self, mock_get):
+        """ get_file_data: Testing the correct files are returned when a version is passed """
+
+        mock_resp = self._mock_response(content=json.dumps(self.file_data))
+        mock_get.return_value = mock_resp
+
+        files = self.client.get_file_data('fake/path/test.png', version='12345')
+
+        # check to make sure we got the right file
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/secure-file/fake/path/test.png',
+            params={'versionId': '12345'}, headers=self.client.HEADERS
+        )
+
+
+    @patch('requests.get')
+    def test_getting_file_versions(self, mock_get):
+        """ get_file_versions: Ensure that the version information of a file is returned """
+        version_data = {
+           'has_next': False,
+           'next_offset': None,
+           'limit': 1,
+           'offset': 1,
+           'version_count_in_result': 1,
+           'total_version_count': 2,
+           'secure_data_version_summaries': [{'id': '00000000-0000-0000-0000-000000012345',
+               'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+               'path': 'fake/path',
+               'action': 'UPDATE',
+               'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+               'version_created_ts': '1978-11-27T23:08:14.027Z',
+               'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+               'action_ts': '1978-11-27T23:08:14.027Z'}]
+        }
+
+        mock_resp = self._mock_response(content=json.dumps(version_data))
+        mock_get.return_value = mock_resp
+
+        files = self.client.get_file_versions('fake/path', limit=1, offset=1)
+
+        # check to make sure we got the right file
+        assert_equals(files['limit'], 1)
+        assert_equals(files['offset'], 1)
+        assert_equals(files['secure_data_version_summaries'][0]['id'], '00000000-0000-0000-0000-000000012345')
+        assert_equals(files['secure_data_version_summaries'][0]['path'], 'fake/path')
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/secret-versions/fake/path',
+            params={'limit': '1', 'offset': '1'},
+            headers=self.client.HEADERS
+        )
+
+
+## ---- secrets ----
     @patch('requests.get')
     def test_getting_a_secret(self, mock_get):
         """ get_secret: Testing the correct secret is returned"""
@@ -500,20 +665,20 @@ class TestCerberusClient(unittest.TestCase):
     def test_getting_secret_versions(self, mock_get):
         """ get_secret_versions: Ensure that the version information of a secret is returned """
         version_data = {
-					 'has_next': False,
-					 'next_offset': None,
-					 'limit': 1,
-					 'offset': 1,
-					 'version_count_in_result': 1,
-					 'total_version_count': 2,
-					 'secure_data_version_summaries': [{'id': '00000000-0000-0000-0000-000000012345',
-							 'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-							 'path': 'fake/path',
-							 'action': 'UPDATE',
+           'has_next': False,
+           'next_offset': None,
+           'limit': 1,
+           'offset': 1,
+           'version_count_in_result': 1,
+           'total_version_count': 2,
+           'secure_data_version_summaries': [{'id': '00000000-0000-0000-0000-000000012345',
+               'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+               'path': 'fake/path',
+               'action': 'UPDATE',
                'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
                'version_created_ts': '1978-11-27T23:08:14.027Z',
-							 'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-							 'action_ts': '1978-11-27T23:08:14.027Z'}]
+               'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+               'action_ts': '1978-11-27T23:08:14.027Z'}]
         }
 
         mock_resp = self._mock_response(content=json.dumps(version_data))
