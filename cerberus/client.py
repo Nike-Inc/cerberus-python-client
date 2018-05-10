@@ -336,9 +336,9 @@ class CerberusClient(object):
         if not version:
             version = "CURRENT"
 
-        payload={'versionId': str(version)}
-        secret_resp = requests.head(str.join('', [self.cerberus_url, '/v1/secure-file/',vault_path]),
-                                   params=payload, headers=self.HEADERS)
+        payload = {'versionId': str(version)}
+        secret_resp = requests.head(str.join('', [self.cerberus_url, '/v1/secure-file/', vault_path]),
+                                    params=payload, headers=self.HEADERS)
 
         throw_if_bad_response(secret_resp)
 
@@ -353,10 +353,10 @@ class CerberusClient(object):
                                    /shared/sdb-path/secret
         """
         if not version:
-          version = "CURRENT"
+            version = "CURRENT"
 
-        payload={'versionId': str(version)}
-        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secure-file/',vault_path]),
+        payload = {'versionId': str(version)}
+        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secure-file/', vault_path]),
                                    params=payload, headers=self.HEADERS)
 
         throw_if_bad_response(secret_resp)
@@ -364,17 +364,18 @@ class CerberusClient(object):
         return secret_resp
 
     def _parse_metadata_filename(self, metadata):
-      """
-      Parse the header metadata to pull out the filename and then store it under the key 'filename'
-      """
-      index = metadata['Content-Disposition'].index('=')+1
-      metadata['filename'] = metadata['Content-Disposition'][index:].replace('"','')
-      return metadata
-      
+        """
+        Parse the header metadata to pull out the filename and then store it under the key 'filename'
+        """
+        index = metadata['Content-Disposition'].index('=')+1
+        metadata['filename'] = metadata['Content-Disposition'][index:].replace('"', '')
+        return metadata
 
     def get_file(self, vault_path, version=None):
         """
-        Return a requests.structures.CaseInsensitiveDict object containing a file and the metadata/header information around it.
+        Return a requests.structures.CaseInsensitiveDict object containing a file and the
+        metadata/header information around it.
+
         The binary data of the file is under the key 'data'
         """
 
@@ -398,7 +399,7 @@ class CerberusClient(object):
 
     def get_file_versions(self, vault_path, limit=None, offset=None):
         """
-        Get verions of a particular secret key
+        Get versions of a particular secret key
         This is just a shim to get_secret_versions
 
         vault_path -- full path to the key in the safety deposit box
@@ -407,14 +408,14 @@ class CerberusClient(object):
         """
 
         return self.get_secret_versions(vault_path, limit, offset)
-    
+
     def _get_all_file_version_ids(self, vault_path, limit=None):
         """
-        Convience function that returns a generator that will paginate over the secret version ids
+        Convenience function that returns a generator that will paginate over the secret version ids
         vault_path -- full path to the key in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
-        
+
         offset = 0
         # Prime the versions dictionary so that all the logic can happen in the loop
         versions = {'has_next': True, 'next_offset': 0}
@@ -426,7 +427,7 @@ class CerberusClient(object):
 
     def _get_all_file_versions(self, vault_path, limit=None):
         """
-        Convience function that returns a generator yielding the contents of secrets and their version info
+        Convenience function that returns a generator yielding the contents of secrets and their version info
         vault_path -- full path to the key in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
@@ -439,10 +440,10 @@ class CerberusClient(object):
 
         # Make sure that limit and offset are in range.
         # Set the normal defaults
-        if not limit or limit <=0:
+        if not limit or limit <= 0:
             limit = 100
 
-        if not offset or offset <0:
+        if not offset or offset < 0:
             offset = 0
 
         payload = {'limit': str(limit), 'offset': str(offset)}
@@ -460,7 +461,7 @@ class CerberusClient(object):
 
         Keyword arguments:
         vault_path -- full path in the safety deposit box that contains the key to store things under
-        filename -- name to store the file as in cerberus.  (This can be differnt than the full path)
+        filename -- name to store the file as in cerberus.  (This can be different than the full path)
         filehandle -- Pass an opened filehandle to the file you want to upload.
            Make sure that the file was opened in binary mode, otherwise the size calculations
            can be off for text files.
@@ -468,13 +469,13 @@ class CerberusClient(object):
         """
 
         if content_type:
-          data = {'file-content': (filename, filehandle, content_type)}
+            data = {'file-content': (filename, filehandle, content_type)}
         else:
-          data = {'file-content': (filename, filehandle)}
+            data = {'file-content': (filename, filehandle)}
 
         headers = self.HEADERS.copy()
         if 'Content-Type' in headers:
-          headers.__delitem__('Content-Type')
+            headers.__delitem__('Content-Type')
 
         secret_resp = requests.post(self.cerberus_url + '/v1/secure-file/' + vault_path,
                                     files=data, headers=headers)
@@ -520,7 +521,7 @@ class CerberusClient(object):
         if not version:
             version = "CURRENT"
 
-        payload={'versionId': str(version)}
+        payload = {'versionId': str(version)}
         secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret/',secure_data_path]),
                                    params=payload, headers=self.HEADERS)
 
@@ -553,7 +554,7 @@ class CerberusClient(object):
 
     def get_secret_versions(self, secure_data_path, limit=None, offset=None):
         """
-        Get verions of a particular secret key
+        Get versions of a particular secret key
 
         secure_data_path -- full path to the key in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
@@ -562,10 +563,10 @@ class CerberusClient(object):
 
         # Make sure that limit and offset are in range.
         # Set the normal defaults
-        if not limit or limit <=0:
+        if not limit or limit <= 0:
             limit = 100
 
-        if not offset or offset <0:
+        if not offset or offset < 0:
             offset = 0
 
         payload = {'limit': str(limit), 'offset': str(offset)}
@@ -580,7 +581,7 @@ class CerberusClient(object):
         secure_data_path -- full path to the key in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
-        
+
         offset = 0
         # Prime the versions dictionary so that all the logic can happen in the loop
         versions = {'has_next': True, 'next_offset': 0}
