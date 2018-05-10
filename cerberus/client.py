@@ -325,39 +325,39 @@ class CerberusClient(object):
         return sdb_resp.json()
 
 ###------ Files ------###
-    def delete_file(self, vault_path):
-        """Delete a file at the given vault path"""
-        secret_resp = requests.delete(self.cerberus_url + '/v1/secure-file/' + vault_path,
+    def delete_file(self, secure_data_path):
+        """Delete a file at the given secure data path"""
+        secret_resp = requests.delete(self.cerberus_url + '/v1/secure-file/' + secure_data_path,
                                       headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp
 
-    def get_file_metadata(self, vault_path, version=None):
+    def get_file_metadata(self, secure_data_path, version=None):
         """Get just the metadata for a file, not the content"""
         if not version:
             version = "CURRENT"
 
         payload = {'versionId': str(version)}
-        secret_resp = requests.head(str.join('', [self.cerberus_url, '/v1/secure-file/', vault_path]),
+        secret_resp = requests.head(str.join('', [self.cerberus_url, '/v1/secure-file/', secure_data_path]),
                                     params=payload, headers=self.HEADERS)
 
         throw_if_bad_response(secret_resp)
 
         return secret_resp.headers
 
-    def _get_files(self, vault_path, version=None):
+    def _get_files(self, secure_data_path, version=None):
         """
-        Return the file stored at the vault_path
+        Return the file stored at the secure data path
         Keyword arguments:
 
-            vault_path (string) -- full path in the secret deposit box that contains the key
+            secure_data_path (string) -- full path in the secret deposit box that contains the key
                                    /shared/sdb-path/secret
         """
         if not version:
             version = "CURRENT"
 
         payload = {'versionId': str(version)}
-        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secure-file/', vault_path]),
+        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secure-file/', secure_data_path]),
                                    params=payload, headers=self.HEADERS)
 
         throw_if_bad_response(secret_resp)
@@ -372,7 +372,7 @@ class CerberusClient(object):
         metadata['filename'] = metadata['Content-Disposition'][index:].replace('"', '')
         return metadata
 
-    def get_file(self, vault_path, version=None):
+    def get_file(self, secure_data_path, version=None):
         """
         Return a requests.structures.CaseInsensitiveDict object containing a file and the
         metadata/header information around it.
@@ -380,40 +380,40 @@ class CerberusClient(object):
         The binary data of the file is under the key 'data'
         """
 
-        query = self._get_files(vault_path, version)
+        query = self._get_files(secure_data_path, version)
         resp = query.headers.copy()
         resp = self._parse_metadata_filename(resp)
         resp['data'] = query.content
 
         return resp
 
-    def get_file_data(self, vault_path, version=None):
+    def get_file_data(self, secure_data_path, version=None):
         """
-        Return the data of a file stored at the vault_path
+        Return the data of a file stored at the secure data path
         This only returns the file data, and does not include any of the meta information stored with it.
 
         Keyword arguments:
 
-            vault_path (string) -- full path in the secret deposit box that contains the file key
+            secure_data_path (string) -- full path in the secret deposit box that contains the file key
         """
-        return self._get_files(vault_path, version).content
+        return self._get_files(secure_data_path, version).content
 
-    def get_file_versions(self, vault_path, limit=None, offset=None):
+    def get_file_versions(self, secure_data_path, limit=None, offset=None):
         """
         Get versions of a particular file
         This is just a shim to get_secret_versions
 
-        vault_path -- full path to the file in the safety deposit box
+        secure_data_path -- full path to the file in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         offset -- Default(0), used for pagination.  Will request records from the given offset.
         """
 
-        return self.get_secret_versions(vault_path, limit, offset)
+        return self.get_secret_versions(secure_data_path, limit, offset)
 
-    def _get_all_file_version_ids(self, vault_path, limit=None):
+    def _get_all_file_version_ids(self, secure_data_path, limit=None):
         """
         Convenience function that returns a generator that will paginate over the file version ids
-        vault_path -- full path to the file in the safety deposit box
+        secure_data_path -- full path to the file in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
 
@@ -422,23 +422,23 @@ class CerberusClient(object):
         versions = {'has_next': True, 'next_offset': 0}
         while (versions['has_next']):
             offset = versions['next_offset']
-            versions = self.get_file_versions(vault_path, limit, offset)
+            versions = self.get_file_versions(secure_data_path, limit, offset)
             for summary in versions['secure_data_version_summaries']:
                 yield summary
 
-    def _get_all_file_versions(self, vault_path, limit=None):
+    def _get_all_file_versions(self, secure_data_path, limit=None):
         """
         Convenience function that returns a generator yielding the contents of all versions of
         a file and its version info
 
-        vault_path -- full path to the file in the safety deposit box
+        secure_data_path -- full path to the file in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
-        for secret in self._get_all_file_version_ids(vault_path, limit):
-            yield {'secret': self.get_file_data(vault_path, version=secret['id']),
+        for secret in self._get_all_file_version_ids(secure_data_path, limit):
+            yield {'secret': self.get_file_data(secure_data_path, version=secret['id']),
                    'version': secret}
 
-    def list_files(self, vault_path, limit=None, offset=None):
+    def list_files(self, secure_data_path, limit=None, offset=None):
         """Return the list of files in the path.  May need to be paginated"""
 
         # Make sure that limit and offset are in range.
@@ -451,20 +451,20 @@ class CerberusClient(object):
 
         payload = {'limit': str(limit), 'offset': str(offset)}
 
-        # Because of the addition of versionId and the way URLs are constructed, vault_path should
+        # Because of the addition of versionId and the way URLs are constructed, secure_data_path should
         #  always end in a '/'.
-        vault_path = self._add_slash(vault_path)
-        secret_resp = requests.get(self.cerberus_url + '/v1/secure-files/' + vault_path,
+        secure_data_path = self._add_slash(secure_data_path)
+        secret_resp = requests.get(self.cerberus_url + '/v1/secure-files/' + secure_data_path,
                                    params=payload, headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp.json()
 
-    def put_file(self, vault_path, filename, filehandle, content_type=None):
+    def put_file(self, secure_data_path, filename, filehandle, content_type=None):
         """
-        Upload a file to a vault_path provided
+        Upload a file to a secure data path provided
 
         Keyword arguments:
-        vault_path -- full path in the safety deposit box that contains the file key to store things under
+        secure_data_path -- full path in the safety deposit box that contains the file key to store things under
         filename -- name to store the file as in cerberus.  (This can be different than the full path)
         filehandle -- Pass an opened filehandle to the file you want to upload.
            Make sure that the file was opened in binary mode, otherwise the size calculations
@@ -481,7 +481,7 @@ class CerberusClient(object):
         if 'Content-Type' in headers:
             headers.__delitem__('Content-Type')
 
-        secret_resp = requests.post(self.cerberus_url + '/v1/secure-file/' + vault_path,
+        secret_resp = requests.post(self.cerberus_url + '/v1/secure-file/' + secure_data_path,
                                     files=data, headers=headers)
         throw_if_bad_response(secret_resp)
         return secret_resp
@@ -526,7 +526,7 @@ class CerberusClient(object):
             version = "CURRENT"
 
         payload = {'versionId': str(version)}
-        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret/',secure_data_path]),
+        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret/', secure_data_path]),
                                    params=payload, headers=self.HEADERS)
 
         throw_if_bad_response(secret_resp)
@@ -578,7 +578,7 @@ class CerberusClient(object):
                                    params=payload, headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp.json()
-    
+
     def _get_all_secret_version_ids(self, secure_data_path, limit=None):
         """
         Convenience function that returns a generator that will paginate over the secret version ids
@@ -606,9 +606,9 @@ class CerberusClient(object):
                    'version': secret}
 
     def list_secrets(self, secure_data_path):
-        """Return json secrets based on the secure data path, this will list keys in a folder"""
+        """Return json secrets based on the secure_data_path, this will list keys in a folder"""
 
-        # Because of the addition of versionId and the way URLs are constructed, secure data path should
+        # Because of the addition of versionId and the way URLs are constructed, secure_data_path should
         #  always end in a '/'.
         secure_data_path = self._add_slash(secure_data_path)
         secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + secure_data_path + '?list=true',
@@ -638,7 +638,7 @@ class CerberusClient(object):
         return secret_resp
 
     def secret_merge(self, secure_data_path, key):
-        """Compare key/values at secure data path and merges them.  New values will overwrite old."""
+        """Compare key/values at secure_data_path and merges them.  New values will overwrite old."""
         get_resp = requests.get(self.cerberus_url + '/v1/secret/' + secure_data_path, headers=self.HEADERS)
         temp_key = {}
         # Ignore a return of 404 since it means the key might not exist
