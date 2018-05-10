@@ -326,13 +326,14 @@ class CerberusClient(object):
 
 ###------ Files ------###
     def delete_file(self, vault_path):
-        """Delete a secret from the given vault path"""
+        """Delete a file at the given vault path"""
         secret_resp = requests.delete(self.cerberus_url + '/v1/secure-file/' + vault_path,
                                       headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp
 
     def get_file_metadata(self, vault_path, version=None):
+        """Get just the metadata for a file, not the content"""
         if not version:
             version = "CURRENT"
 
@@ -399,10 +400,10 @@ class CerberusClient(object):
 
     def get_file_versions(self, vault_path, limit=None, offset=None):
         """
-        Get versions of a particular secret key
+        Get versions of a particular file
         This is just a shim to get_secret_versions
 
-        vault_path -- full path to the key in the safety deposit box
+        vault_path -- full path to the file in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         offset -- Default(0), used for pagination.  Will request records from the given offset.
         """
@@ -411,8 +412,8 @@ class CerberusClient(object):
 
     def _get_all_file_version_ids(self, vault_path, limit=None):
         """
-        Convenience function that returns a generator that will paginate over the secret version ids
-        vault_path -- full path to the key in the safety deposit box
+        Convenience function that returns a generator that will paginate over the file version ids
+        vault_path -- full path to the file in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
 
@@ -427,8 +428,10 @@ class CerberusClient(object):
 
     def _get_all_file_versions(self, vault_path, limit=None):
         """
-        Convenience function that returns a generator yielding the contents of secrets and their version info
-        vault_path -- full path to the key in the safety deposit box
+        Convenience function that returns a generator yielding the contents of all versions of
+        a file and its version info
+
+        vault_path -- full path to the file in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
         for secret in self._get_all_file_version_ids(vault_path, limit):
@@ -457,10 +460,11 @@ class CerberusClient(object):
         return secret_resp.json()
 
     def put_file(self, vault_path, filename, filehandle, content_type=None):
-        """Write secret(s) to a vault_path provided a dictionary of key/values
+        """
+        Upload a file to a vault_path provided
 
         Keyword arguments:
-        vault_path -- full path in the safety deposit box that contains the key to store things under
+        vault_path -- full path in the safety deposit box that contains the file key to store things under
         filename -- name to store the file as in cerberus.  (This can be different than the full path)
         filehandle -- Pass an opened filehandle to the file you want to upload.
            Make sure that the file was opened in binary mode, otherwise the size calculations
