@@ -17,6 +17,7 @@ See the License for the specific language governing permissions and* limitations
 import ast
 import json
 import unittest
+import platform
 
 import requests
 import mock
@@ -81,6 +82,9 @@ class TestCerberusClient(unittest.TestCase):
             'X-B3-TraceId': 'fa533432fe425da9',
             'filename': 'test.png',
             'data': '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x12\x00\x00\x00\x07\x08\x06\x00\x00\x00\x05\xd5\x1d\x7f\x00\x00\x00\x06bKGD\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xe2\x05\t\x16(\n\x87\x93H\xa5\x00\x00\x00\x19tEXtComment\x00Created with GIMPW\x81\x0e\x17\x00\x00\x00UIDAT\x18\xd3\x9d\x90A\n\xc0@\x08\x03\'e\xff\xff\xe5\xf4R\x8bX\xa5\xcbzs\xd0\x10F\xb6-\t\xdb\x9cL\xfc\nx\x13"L\x12\x95u<\xef+@\x0e\xa9\xcf\xf5\xa6\xe3k\xaa[\'7\xb0\xfdQ\xd1\x06M\xbe\xa6\xd6\x00\xd7\x8e\xcc??\x00\xf2\x13]=\xed\xc8\xce\xfc\x06\x0f\xbfK\x06s\xd8\x7f\x99\x00\x00\x00\x00IEND\xaeB`\x82'}
+        # Json parsing is differnt on python 2.7
+        if int(platform.python_version_tuple()[0]) < 3:
+            self.file_data['data'] = "Test String"
 
     @staticmethod
     def _mock_response(status=200, reason='OK', content=''):
@@ -491,19 +495,9 @@ class TestCerberusClient(unittest.TestCase):
     @patch('requests.get')
     def test_getting_a_file(self, mock_get,mock_parse):
         """ get_file: Testing the correct file is returned"""
-        file_data = {
-            'Date': 'Sun, 17 November 1974 00:02:30 GMT',
-            'Content-Type': 'image/png; charset=UTF-8',
-            'Content-Length': '237',
-            'Connection': 'keep-alive',
-            'Content-Disposition': 'attachment; filename="test.png"',
-            'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-            'X-B3-TraceId': 'fa533432fe425da9',
-            'filename': 'test.png',
-            'data': '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x12\x00\x00\x00\x07\x08\x06\x00\x00\x00\x05\xd5\x1d\x7f\x00\x00\x00\x06bKGD\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xe2\x05\t\x16(\n\x87\x93H\xa5\x00\x00\x00\x19tEXtComment\x00Created with GIMPW\x81\x0e\x17\x00\x00\x00UIDAT\x18\xd3\x9d\x90A\n\xc0@\x08\x03\'e\xff\xff\xe5\xf4R\x8bX\xa5\xcbzs\xd0\x10F\xb6-\t\xdb\x9cL\xfc\nx\x13"L\x12\x95u<\xef+@\x0e\xa9\xcf\xf5\xa6\xe3k\xaa[\'7\xb0\xfdQ\xd1\x06M\xbe\xa6\xd6\x00\xd7\x8e\xcc??\x00\xf2\x13]=\xed\xc8\xce\xfc\x06\x0f\xbfK\x06s\xd8\x7f\x99\x00\x00\x00\x00IEND\xaeB`\x82'}
         
         mock_parse.return_value=self.file_data
-        mock_resp = self._mock_response(content=json.dumps(self.file_data))
+        mock_resp = self._mock_response(content=json.dumps(self.file_data, ensure_ascii=False))
         mock_get.return_value = mock_resp
 
         secret_file = self.client.get_file('fake/path/test.png')
