@@ -459,18 +459,20 @@ class CerberusClient(object):
         throw_if_bad_response(secret_resp)
         return secret_resp.json()
 
-    def put_file(self, secure_data_path, filename, filehandle, content_type=None):
+    def put_file(self, secure_data_path, filehandle, content_type=None):
         """
         Upload a file to a secure data path provided
 
         Keyword arguments:
         secure_data_path -- full path in the safety deposit box that contains the file key to store things under
-        filename -- name to store the file as in cerberus.  (This can be different than the full path)
         filehandle -- Pass an opened filehandle to the file you want to upload.
            Make sure that the file was opened in binary mode, otherwise the size calculations
            can be off for text files.
         content_type -- Optional.  Set the Mime type of the file you're uploading.
         """
+
+        # Parse out the filename from the path
+        filename = secure_data_path.rsplit('/', 1)
 
         if content_type:
             data = {'file-content': (filename, filehandle, content_type)}
