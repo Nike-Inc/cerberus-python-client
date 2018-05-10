@@ -20,7 +20,7 @@ from .util import throw_if_bad_response
 
 
 class UserAuth(object):
-    """Class to authenticate with username and password and returns vault token"""
+    """Class to authenticate with username and password and returns a cerberus token"""
     HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
 
     def __init__(self, cerberus_url, username, password):

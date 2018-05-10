@@ -28,7 +28,7 @@ import os
 
 class CerberusClient(object):
     """ Cerberus Python Client for interacting with
-        Cerberus APIs and Vault. Authentication is done
+        Cerberus APIs. Authentication is done
         via the Auth Classes"""
     HEADERS = {'Content-Type': 'application/json'}
 
@@ -45,7 +45,7 @@ class CerberusClient(object):
         if self.token is None:
             self._set_token()
 
-        self.HEADERS['X-Vault-Token'] = self.token
+        self.HEADERS['X-Cerberus-Token'] = self.token
         self.HEADERS['X-Cerberus-Client'] = 'CerberusPythonClient/' + CLIENT_VERSION
 
     def _add_slash(self, string=None):
@@ -196,7 +196,7 @@ class CerberusClient(object):
         return sdb_resp.json()['path']
 
     def get_sdb_keys(self, path):
-        """Return the keys for a SDB, which are need for the full vault path"""
+        """Return the keys for a SDB, which are need for the full secure data path"""
         list_resp = requests.get(
             self.cerberus_url + '/v1/secret/' + path + '/?list=true',
             headers=self.HEADERS
@@ -324,80 +324,80 @@ class CerberusClient(object):
         throw_if_bad_response(sdb_resp)
         return sdb_resp.json()
 
-    def delete_secret(self, vault_path):
-        """Delete a secret from the given vault path"""
-        secret_resp = requests.delete(self.cerberus_url + '/v1/secret/' + vault_path,
+    def delete_secret(self, secure_data_path):
+        """Delete a secret from the given secure data path"""
+        secret_resp = requests.delete(self.cerberus_url + '/v1/secret/' + secure_data_path,
                                       headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp
 
-    def get_secret(self, vault_path, key, version=None):
+    def get_secret(self, secure_data_path, key, version=None):
         """
-        (Deprecated)Return the secret based on the vault_path and key
+        (Deprecated)Return the secret based on the secure data path and key
 
         This method is deprecated because it misleads users into thinking they're only getting one value from Cerberus
         when in reality they're getting all values, from which a single value is returned.
-        Use get_secrets_data(vault_path)[key] instead.
+        Use get_secrets_data(secure_data_path)[key] instead.
         (See https://github.com/Nike-Inc/cerberus-python-client/issues/18)
         """
         warnings.warn(
             "get_secret is deprecated, use get_secrets_data instead",
             DeprecationWarning
         )
-        secret_resp_json = self._get_secrets(vault_path, version)
+        secret_resp_json = self._get_secrets(secure_data_path, version)
 
         if key in secret_resp_json['data']:
             return secret_resp_json['data'][key]
         else:
             raise CerberusClientException("Key '%s' not found" % key)
 
-    def _get_secrets(self, vault_path, version=None):
+    def _get_secrets(self, secure_data_path, version=None):
         """
-        Return full json secrets based on the vault_path
+        Return full json secrets based on the secure data path
         Keyword arguments:
 
-            vault_path (string) -- full path in the secret deposit box that contains the key
+            secure_data_path (string) -- full path in the secret deposit box that contains the key
                                    /shared/sdb-path/secret
         """
         if not version:
             version = "CURRENT"
 
         payload={'versionId': str(version)}
-        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret/',vault_path]),
+        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret/',secure_data_path]),
                                    params=payload, headers=self.HEADERS)
 
         throw_if_bad_response(secret_resp)
 
         return secret_resp.json()
 
-    def get_secrets(self, vault_path, version=None):
-        """(Deprecated)Return json secrets based on the vault_path
+    def get_secrets(self, secure_data_path, version=None):
+        """(Deprecated)Return json secrets based on the secure data path
 
         This method is deprecated because an addition step of reading value with ['data'] key from the returned
         data is required to get secrets, which contradicts the method name.
-        Use get_secrets_data(vault_path) instead.
+        Use get_secrets_data(secure_data_path) instead.
         (See https://github.com/Nike-Inc/cerberus-python-client/issues/19)
         """
         warnings.warn(
             "get_secrets is deprecated, use get_secrets_data instead",
             DeprecationWarning
         )
-        return self._get_secrets(vault_path, version)
+        return self._get_secrets(secure_data_path, version)
 
-    def get_secrets_data(self, vault_path, version=None):
-        """Return json secrets based on the vault_path
+    def get_secrets_data(self, secure_data_path, version=None):
+        """Return json secrets based on the secure data path
 
         Keyword arguments:
 
-            vault_path (string) -- full path in the secret deposit box that contains the key
+            secure_data_path (string) -- full path in the secret deposit box that contains the key
         """
-        return self._get_secrets(vault_path, version)['data']
+        return self._get_secrets(secure_data_path, version)['data']
 
-    def get_secret_versions(self, vault_path, limit=None, offset=None):
+    def get_secret_versions(self, secure_data_path, limit=None, offset=None):
         """
         Get verions of a particular secret key
 
-        vault_path -- full path to the key in the safety deposit box
+        secure_data_path -- full path to the key in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         offset -- Default(0), used for pagination.  Will request records from the given offset.
         """
@@ -418,15 +418,15 @@ class CerberusClient(object):
             offset = 0
 
         payload = {'limit': str(limit), 'offset': str(offset)}
-        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret-versions/', vault_path]),
+        secret_resp = requests.get(str.join('', [self.cerberus_url, '/v1/secret-versions/', secure_data_path]),
                                    params=payload, headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp.json()
     
-    def _get_all_secret_version_ids(self, vault_path, limit=None):
+    def _get_all_secret_version_ids(self, secure_data_path, limit=None):
         """
-        Convience function that returns a generator that will paginate over the secret version ids
-        vault_path -- full path to the key in the safety deposit box
+        Convenience function that returns a generator that will paginate over the secret version ids
+        secure_data_path -- full path to the key in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
         
@@ -435,55 +435,55 @@ class CerberusClient(object):
         versions = {'has_next': True, 'next_offset': 0}
         while (versions['has_next']):
             offset = versions['next_offset']
-            versions = self.get_secret_versions(vault_path, limit, offset)
+            versions = self.get_secret_versions(secure_data_path, limit, offset)
             for summary in versions['secure_data_version_summaries']:
                 yield summary
 
-    def _get_all_secret_versions(self, vault_path, limit=None):
+    def _get_all_secret_versions(self, secure_data_path, limit=None):
         """
-        Convience function that returns a generator yielding the contents of secrets and their version info
-        vault_path -- full path to the key in the safety deposit box
+        Convenience function that returns a generator yielding the contents of secrets and their version info
+        secure_data_path -- full path to the key in the safety deposit box
         limit -- Default(100), limits how many records to be returned from the api at once.
         """
-        for secret in self._get_all_secret_version_ids(vault_path, limit):
-            yield {'secret': self.get_secrets_data(vault_path, version=secret['id']),
+        for secret in self._get_all_secret_version_ids(secure_data_path, limit):
+            yield {'secret': self.get_secrets_data(secure_data_path, version=secret['id']),
                    'version': secret}
 
-    def list_secrets(self, vault_path):
-        """Return json secrets based on the vault_path, this will list keys in a folder"""
+    def list_secrets(self, secure_data_path):
+        """Return json secrets based on the secure data path, this will list keys in a folder"""
 
-        # Because of the addition of versionId and the way URLs are constructed, vault_path should
+        # Because of the addition of versionId and the way URLs are constructed, secure data path should
         #  always end in a '/'.
-        vault_path = self._add_slash(vault_path)
-        secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path + '?list=true',
+        secure_data_path = self._add_slash(secure_data_path)
+        secret_resp = requests.get(self.cerberus_url + '/v1/secret/' + secure_data_path + '?list=true',
                                    headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp.json()
 
-    def put_secret(self, vault_path, secret, merge=True):
-        """Write secret(s) to a vault_path provided a dictionary of key/values
+    def put_secret(self, secure_data_path, secret, merge=True):
+        """Write secret(s) to a secure data path provided a dictionary of key/values
 
         Keyword arguments:
-        vault_path -- full path in the safety deposit box that contains the key
-        secret -- A dictionary containing key/values to be written at the vault_path
+        secure_data_path -- full path in the safety deposit box that contains the key
+        secret -- A dictionary containing key/values to be written at the secure data path
         merge -- Boolean that determines if the provided secret keys should be merged with
-            the values already present at the vault_path.  If False the keys will
-            completely overwrite what was stored at the vault_path. (default True)
+            the values already present at the secure data path.  If False the keys will
+            completely overwrite what was stored at the secure data path. (default True)
         """
         # json encode the input.  Cerberus is sensitive to double vs single quotes.
         # an added bonus is that json encoding transforms python2 unicode strings
         # into a compatible format.
         data = json.encoder.JSONEncoder().encode(secret)
         if merge:
-            data = self.secret_merge(vault_path, secret)
-        secret_resp = requests.post(self.cerberus_url + '/v1/secret/' + vault_path,
+            data = self.secret_merge(secure_data_path, secret)
+        secret_resp = requests.post(self.cerberus_url + '/v1/secret/' + secure_data_path,
                                     data=str(data), headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp
 
-    def secret_merge(self, vault_path, key):
-        """Compare key/values at vault_path and merges them.  New values will overwrite old."""
-        get_resp = requests.get(self.cerberus_url + '/v1/secret/' + vault_path, headers=self.HEADERS)
+    def secret_merge(self, secure_data_path, key):
+        """Compare key/values at secure data path and merges them.  New values will overwrite old."""
+        get_resp = requests.get(self.cerberus_url + '/v1/secret/' + secure_data_path, headers=self.HEADERS)
         temp_key = {}
         # Ignore a return of 404 since it means the key might not exist
         if get_resp.status_code == requests.codes.bad and get_resp.status_code not in [403, 404]:

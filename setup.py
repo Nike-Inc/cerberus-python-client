@@ -10,7 +10,7 @@ setup(
     ],
     author='Ann Wallace',
     author_email='ann.wallace@nike.com',
-    description="A python client for interacting with Cerberus and Vault",
+    description="A python client for interacting with Cerberus",
     url='https://github.com/Nike-Inc/cerberus-python-client',
     license='Apache License, v2.0',
     keywords='cerberus nike',
