@@ -345,7 +345,7 @@ class CerberusClient(object):
 
         return secret_resp.headers
 
-    def _get_files(self, secure_data_path, version=None):
+    def _get_file(self, secure_data_path, version=None):
         """
         Return the file stored at the secure data path
         Keyword arguments:
@@ -380,7 +380,7 @@ class CerberusClient(object):
         The binary data of the file is under the key 'data'
         """
 
-        query = self._get_files(secure_data_path, version)
+        query = self._get_file(secure_data_path, version)
         resp = query.headers.copy()
         resp = self._parse_metadata_filename(resp)
         resp['data'] = query.content
@@ -396,7 +396,7 @@ class CerberusClient(object):
 
             secure_data_path (string) -- full path in the secret deposit box that contains the file key
         """
-        return self._get_files(secure_data_path, version).content
+        return self._get_file(secure_data_path, version).content
 
     def get_file_versions(self, secure_data_path, limit=None, offset=None):
         """
