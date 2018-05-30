@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and* limitations
 import requests
 from . import CLIENT_VERSION
 
-from .util import throw_if_bad_response
+from .util import throw_if_bad_response, get_with_retry, post_with_retry
 
 
 class UserAuth(object):
@@ -31,7 +31,7 @@ class UserAuth(object):
 
     def get_auth(self):
         """Returns auth response which has client token unless MFA is required"""
-        auth_resp = requests.get(self.cerberus_url + '/v2/auth/user',
+        auth_resp = get_with_retry(self.cerberus_url + '/v2/auth/user',
                                  auth=(self.username, self.password),
                                  headers=self.HEADERS)
 
@@ -56,7 +56,7 @@ class UserAuth(object):
         """Gets MFA code from user and returns response which includes the client token"""
         sec_code = input('Enter ' + auth_resp['data']['devices'][0]['name'] + ' security code: ')
 
-        mfa_resp = requests.post(
+        mfa_resp = post_with_retry(
             self.cerberus_url + '/v2/auth/mfa_check',
             json={'otp_token': sec_code,
                   'device_id': auth_resp['data']['devices'][0]['id'],
