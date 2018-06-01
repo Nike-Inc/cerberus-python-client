@@ -4,6 +4,8 @@ import json
 import requests
 import time
 
+default_retry_attempt_number = 3
+
 
 def throw_if_bad_response(response):
     """Throw an exception if the Cerberus response is not successful."""
@@ -14,23 +16,23 @@ def throw_if_bad_response(response):
         raise CerberusClientException(msg)
 
 
-def get_with_retry(url, retry=3, **kwargs):
+def get_with_retry(url, retry=default_retry_attempt_number, **kwargs):
     return request_with_retry(url, 'get', retry, **kwargs)
 
 
-def post_with_retry(url, retry=3, **kwargs):
+def post_with_retry(url, retry=default_retry_attempt_number, **kwargs):
     return request_with_retry(url, 'post', retry, **kwargs)
 
 
-def put_with_retry(url, retry=3, **kwargs):
+def put_with_retry(url, retry=default_retry_attempt_number, **kwargs):
     return request_with_retry(url, 'put', retry, **kwargs)
 
 
-def delete_with_retry(url, retry=3, **kwargs):
+def delete_with_retry(url, retry=default_retry_attempt_number, **kwargs):
     return request_with_retry(url, 'delete', retry, **kwargs)
 
 
-def head_with_retry(url, retry=3, **kwargs):
+def head_with_retry(url, retry=default_retry_attempt_number, **kwargs):
     return request_with_retry(url, 'head', retry, **kwargs)
 
 
@@ -41,11 +43,11 @@ def request_with_retry(url, verb, retry, **kwargs):
                'delete': requests.delete,
                'head': requests.head}
     resp = None
-    for retry_attemp_number in range(retry):
+    for retry_attempt_number in range(retry):
         resp = request[verb](url, **kwargs)
         if not resp.status_code >= 500:
             return resp
         else:
             # exponential backoff
-            time.sleep(2**retry_attemp_number)
+            time.sleep(0.1 * 2 ** retry_attempt_number)
     return resp
