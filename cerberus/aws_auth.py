@@ -21,7 +21,7 @@ import boto3
 import requests
 
 from . import CLIENT_VERSION
-from .util import throw_if_bad_response
+from .util import throw_if_bad_response, post_with_retry
 
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
@@ -112,7 +112,7 @@ class AWSAuth(object):
             'iam_principal_arn': self.role_arn,
             'region': self.region
         }
-        encrypted_resp = requests.post(self.cerberus_url + '/v2/auth/iam-principal', data=json.dumps(request_body),
+        encrypted_resp = post_with_retry(self.cerberus_url + '/v2/auth/iam-principal', data=json.dumps(request_body),
                                        headers=self.HEADERS)
 
         if encrypted_resp.status_code != 200:

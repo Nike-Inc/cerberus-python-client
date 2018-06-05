@@ -5,6 +5,9 @@ Date format is Day-Month-Year
 
 ### Added
 
+###### 01-06-2018
+- Allow client to retry on 5xx responses
+
 ###### 11-05-2018
 - Adds File support, including file versioning
 

@@ -375,10 +375,8 @@ class TestCerberusClient(unittest.TestCase):
                  'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'}],
             'owner': 'Admin.Studio.54',
             'user_group_permissions': []
-            }
-        mock_resp = mock.Mock()
-        mock_resp.json.return_value = sdb_data
-        #mock_resp = self._mock_response(content=json.dumps(sdb_data))
+        }
+        mock_resp = self._mock_response(content=json.dumps(sdb_data))
         mock_get.return_value = mock_resp
 
         create = self.client.create_sdb(
@@ -495,7 +493,7 @@ class TestCerberusClient(unittest.TestCase):
     @patch('requests.get')
     def test_getting_a_file(self, mock_get,mock_parse):
         """ get_file: Testing the correct file is returned"""
-        
+
         mock_parse.return_value=self.file_data
         mock_resp = self._mock_response(content=json.dumps(self.file_data, ensure_ascii=False))
         mock_get.return_value = mock_resp
@@ -700,6 +698,68 @@ class TestCerberusClient(unittest.TestCase):
         mget.return_value = self._mock_response(status=401, content=data)
         with self.assertRaises(CerberusClientException):
             self.client.get_secrets('this/path/does/not/exist')
+
+    @patch('requests.get')
+    def test_get_secrets_retry_on_5xx(self, mget):
+        """Ensure that the client retries on 5xx response. """
+        error_data = json.dumps({"error_id": "123", "errors": []})
+        secret_data = json.dumps({
+            "data": {
+                "sushi": "ikenohana",
+                "ramen": "yuzu"
+            }
+        })
+
+        mget.side_effect = [self._mock_response(status=500, content=error_data), self._mock_response(status=502, content=error_data), self._mock_response(status=200, content=secret_data)]
+        self.client.get_secrets_data('fake/path')
+
+    @patch('requests.get')
+    def test_get_secrets_retry_stop_after_limit(self, mget):
+        """Ensure that the client does not retry too many times. """
+        error_data = json.dumps({"error_id": "123", "errors": []})
+        secret_data = json.dumps({
+            "data": {
+                "sushi": "ikenohana",
+                "ramen": "yuzu"
+            }
+        })
+
+        mget.side_effect = [self._mock_response(status=500, content=error_data),
+                            self._mock_response(status=502, content=error_data),
+                            self._mock_response(status=500, content=error_data),
+                            self._mock_response(status=200, content=secret_data)]
+        with self.assertRaises(CerberusClientException):
+            self.client.get_secrets_data('fake/path')
+
+    @patch('requests.get')
+    def test_get_secrets_does_not_retry_on_200(self, mget):
+        """ Ensure that the client does not retry on 200 response. """
+        error_data = json.dumps({"error_id": "123", "errors": []})
+        secret_data = json.dumps({
+            "data": {
+                "sushi": "ikenohana",
+                "ramen": "yuzu"
+            }
+        })
+
+        mget.side_effect = [self._mock_response(status=200, content=secret_data),
+                            self._mock_response(status=500, content=error_data)]
+        self.client.get_secrets_data('fake/path')
+
+    @patch('requests.get')
+    def test_get_secrets_does_not_retry_on_4xx(self, mget):
+        """ Ensure that the client does not retry on 4xx response. """
+        error_data = json.dumps({"error_id": "123", "errors": []})
+
+        mget.side_effect = [self._mock_response(status=403, content=error_data),
+                            self._mock_response(status=403, content=error_data)]
+        with self.assertRaises(CerberusClientException):
+            self.client.get_secrets_data('fake/path')
+        mget.assert_called_once_with(
+            self.cerberus_url + '/v1/secret/fake/path',
+            params={'versionId': 'CURRENT'},
+            headers=self.client.HEADERS
+        )
 
     @patch('requests.get')
     def test_get_secret_invalid_path(self, mget):
