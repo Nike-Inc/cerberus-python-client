@@ -39,19 +39,18 @@ class AWSAuth(object):
 
     def set_auth(self, role_arn=None, region=None, assume_role=True):
         """Sets the variables needed for AWS Auth"""
-
+        is_ecs = 'AWS_CONTAINER_CREDENTIALS_RELATIVE_URI' in os.environ
         if role_arn is None:
-            try:
-                self.get_instance_role_arn()
-            except requests.exceptions.ConnectionError:
-                print('Cannot find EC2 metadata, trying ECS task metadata instead')
+            if is_ecs:
                 self.get_ecs_role_arn()
+            else:
+                self.get_instance_role_arn()
         else:
             self.role_arn = role_arn
             self.assume_role = assume_role
 
         if region is None:
-            self.region = self.get_region()
+            self.region = self.get_ecs_region() if is_ecs else self.get_region()
         else:
             self.region = region
 
@@ -116,15 +115,14 @@ class AWSAuth(object):
         except:
             pass
 
-        try:
-            # This is an ECS task, get the region from the metadata service
-            task_arn = requests.get('http://169.254.170.2/v2/metadata').json()['TaskARN']
-            m = re.match('arn:aws:ecs:(?P<region>.*):(.*):task/(.*)', task_arn)
-            return m.group('region')
-        except:
-            pass
-
         return False
+
+    def get_ecs_region(self):
+        """Returns region from ecs task"""
+        # This is an ECS task, get the region from the metadata service
+        task_arn = requests.get('http://169.254.170.2/v2/metadata').json()['TaskARN']
+        m = re.match('arn:aws:ecs:(?P<region>.*):(.*):task/(.*)', task_arn)
+        return m.group('region')
 
     def get_token(self):
         """Returns a client token from Cerberus"""

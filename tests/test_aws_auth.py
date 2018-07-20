@@ -112,7 +112,9 @@ class TestAWSAuth(unittest.TestCase):
     @mock_sts
     def test_get_token_for_ecs(self, mock_post, mock_get):
         credential_endpoint_res = {'RoleArn': 'arn:aws:iam::123456789012:role/test_role'}
-        res = {'http://169.254.170.2/creds': self._mock_response(content=json.dumps(credential_endpoint_res))}
+        metadata_endpoint_res = {'TaskARN': 'arn:aws:ecs:us-west-2:123456789012:task/1dc5c17a-422b-4dc4-b493-371970c6c4d6'}
+        res = {'http://169.254.170.2/creds': self._mock_response(content=json.dumps(credential_endpoint_res)),
+               'http://169.254.170.2/v2/metadata': self._mock_response(content=json.dumps(metadata_endpoint_res))}
         mock_response = MultiEndpointRequest(res)
         mock_get.side_effect = mock_response.get
         # Example Cerberus response.
