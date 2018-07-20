@@ -24,6 +24,7 @@ from mock import patch, ANY
 from moto import mock_kms
 from moto import mock_sts
 from .matcher import AnyDictWithKey
+from .mock import MultiEndpointRequest
 
 from cerberus.aws_auth import AWSAuth
 
@@ -103,3 +104,44 @@ class TestAWSAuth(unittest.TestCase):
         token = auth_client.get_token()
         mock_post.assert_called_once_with(ANY, data=ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
         self.assertEqual(token, response_body['client_token'])
+
+    @patch('requests.get')
+    @patch('requests.post')
+    @patch.dict('os.environ', {'AWS_CONTAINER_CREDENTIALS_RELATIVE_URI': '/creds'})
+    @mock_kms
+    @mock_sts
+    def test_get_token_for_ecs(self, mock_post, mock_get):
+        credential_endpoint_res = {'RoleArn': 'arn:aws:iam::123456789012:role/test_role'}
+        res = {'http://169.254.170.2/creds': self._mock_response(content=json.dumps(credential_endpoint_res))}
+        mock_response = MultiEndpointRequest(res)
+        mock_get.side_effect = mock_response.get
+        # Example Cerberus response.
+        response_body = {
+            "client_token": "9a8b5f0e-b41f-3fc7-1c94-3ed4a8057396",
+            "policies": [
+                "web"
+            ],
+            "metadata": {
+                "iam_principal_arn": "arn:aws:iam::123:role/web"
+            },
+            "lease_duration": 3600,
+            "renewable": True
+        }
+
+        client = boto3.client('kms', region_name='us-west-2')
+        key_data = client.create_key()
+        key_id = key_data['KeyMetadata']['KeyId']
+
+        cipher_data = client.encrypt(KeyId=key_id, Plaintext=json.dumps(response_body).encode())
+
+        mock_post.return_value = self._mock_response(
+            content=json.dumps({'auth_data': base64.b64encode(cipher_data['CiphertextBlob']).decode()})
+        )
+
+        # Test the AWSAuth client leveraging default role ARN and region detection...
+        auth_client = AWSAuth("https://cerberus.fake.com")
+        mock_post.reset_mock()
+        token = auth_client.get_token()
+        mock_post.assert_called_once_with(ANY, data=ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
+        self.assertEqual(token, response_body['client_token'])
+        self.assertEqual(auth_client.role_arn, 'arn:aws:iam::123456789012:role/test_role')
