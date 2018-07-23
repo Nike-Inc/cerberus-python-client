@@ -24,7 +24,7 @@ from mock import patch, ANY
 from moto import mock_kms
 from moto import mock_sts
 from .matcher import AnyDictWithKey
-from .mock import MultiEndpointRequest
+from .mocks import MultiEndpointRequest
 
 from cerberus.aws_auth import AWSAuth
 
