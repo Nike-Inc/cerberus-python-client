@@ -51,7 +51,7 @@ from cerberus.client import CerberusClient
 #### Instantiate the Client
 
 
-Default IAM Role Authentication(EC2 instances only):
+Default IAM Role Authentication(EC2 instances or ECS tasks):
 
 ```python
 client = CerberusClient('https://my.cerberus.url')
