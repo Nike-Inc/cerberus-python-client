@@ -5,6 +5,10 @@ Date format is Day-Month-Year
 
 ### Added
 
+###### 25-07-2018
+- Version 1.3.0 - Add support for ECS task
+- Fix a bug where html error message would blow up the client
+
 ###### 01-06-2018
 - Allow client to retry on 5xx responses
 
