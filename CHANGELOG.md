@@ -5,6 +5,9 @@ Date format is Day-Month-Year
 
 ### Added
 
+###### 22-10-2018
+- Version 1.3.1 - Add basic support for multiple mfa device options
+
 ###### 25-07-2018
 - Version 1.3.0 - Add support for ECS task
 - Fix a bug where html error message would blow up the client

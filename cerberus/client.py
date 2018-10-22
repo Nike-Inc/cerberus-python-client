@@ -76,8 +76,14 @@ class CerberusClient(object):
         except:
             pass
         if self.username:
-            ua = UserAuth(self.cerberus_url, self.username, self.password)
-            self.token = ua.get_token()
+            try:
+                ua = UserAuth(self.cerberus_url, self.username, self.password)
+                self.token = ua.get_token()
+            except CerberusClientException as e:
+                print("Error: " + str(e))
+                pass
+            except Exception as e:
+                print("Error: " + str(e))
         else:
             if self.lambda_context is not None:
                 self._set_lambda_context()
