@@ -81,7 +81,6 @@ class CerberusClient(object):
                 self.token = ua.get_token()
             except CerberusClientException as e:
                 print("Error: " + str(e))
-                pass
             except Exception as e:
                 print("Error: " + str(e))
         else:
