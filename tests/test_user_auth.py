@@ -42,6 +42,19 @@ class TestUserAuth(object):
                 "devices": [{"id": "223", "name": "Google Authenticator"}]
             }
         }
+        cls.auth_resp_multi = {
+            "status": "mfa_req",
+            "data": {
+                "username": "unicorn@rainbow.com",
+                "state_token": "0127a384d305138d4e",
+                "client_token": "None",
+                "user_id": "1325",
+                "devices": [
+                  {"id": "223", "name": "Google Authenticator"},
+                  {"id": "224", "name": "OTP Authenticator"}
+                  ]
+            }
+        }
 
     @staticmethod
     def _mock_response(status=200, reason=None, content=''):
@@ -119,6 +132,60 @@ class TestUserAuth(object):
 
         # confirm the json matches
         assert_dict_equal(response, mfa_data)
+
+    @patch(input_module, side_effect=[ '1', '0987654321'])
+    @patch('requests.post')
+    def test_multi_mfa_response(self, mock_post, mock_input=None):
+        """ Testing that mfa_response returns the correct json when there are multiple MFAs available """
+        mfa_data = {
+            "status": "success",
+            "data": {
+                "user_id": "134",
+                "username": "unicorn@rainbow.com",
+                "state_token": None,
+                "devices": [],
+                "client_token": {
+                    "client_token": "61e3-f3f-6536-a3e6-b498161d",
+                    "policies": ["cloud-events-owner", "pixie-dust-owner"],
+                    "metadata": {
+                        "groups": "Rainbow.Playgroun.User,CareBear.users",
+                        "is_admin": "false",
+                        "username": "unicorn@rainbow.com"
+                    },
+                    "lease_duration": 3600,
+                    "renewable": True
+                }
+            }
+        }
+
+        # mock all the things
+        mock_post.return_value = self._mock_response(content=json.dumps(mfa_data))
+
+        response = self.client.get_mfa(self.auth_resp_multi)
+
+        # confirm the json matches
+        assert_dict_equal(response, mfa_data)
+
+    @raises(CerberusClientException)
+    @patch(input_module, return_value='a1')
+    def test_multi_mfa_response_text(self, mock_input=None):
+        """ Testing improper inputs for Multiple MFA selections, (a1) """
+        # mock all the things
+        response = self.client.get_mfa(self.auth_resp_multi)
+
+    @raises(CerberusClientException)
+    @patch(input_module, return_value='-1')
+    def test_multi_mfa_response_low(self, mock_input=None):
+        """ Testing improper inputs for Multiple MFA selections, (-1) """
+        # mock all the things
+        response = self.client.get_mfa(self.auth_resp_multi)
+
+    @raises(CerberusClientException)
+    @patch(input_module, return_value='2')
+    def test_multi_mfa_response_high(self, mock_input=None):
+        """ Testing improper inputs for Multiple MFA selections, (2) """
+        # mock all the things
+        response = self.client.get_mfa(self.auth_resp_multi)
 
     @raises(CerberusClientException)
     @patch('requests.get')

@@ -3,7 +3,9 @@ python:
 - '2.7'
 - '3.6'
 install:
+- pip install urllib3==1.23
 - pip install -r requirements-dev.txt
+- pip install google-compute-engine
 - pip install twine
 - python setup.py install
 script:
