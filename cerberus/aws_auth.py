@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and* limitations
 
 from botocore import session, awsrequest, auth
 
-from . import CLIENT_VERSION
+from . import CerberusClientException, CLIENT_VERSION
 from .util import throw_if_bad_response, post_with_retry
 
 class AWSAuth(object):
@@ -30,7 +30,10 @@ class AWSAuth(object):
         """Returns V4 signed get-caller-identity request headers"""
         boto_session = session.Session()
         credentials = boto_session.get_credentials()
-        readonly_credentials = credentials.get_frozen_credentials()
+        if credentials is None:
+            raise CerberusClientException("Unable to locate AWS credentials")
+        else:
+            readonly_credentials = credentials.get_frozen_credentials()
 
         # hardcode get-caller-identity request
         data = {'Action': 'GetCallerIdentity', 'Version': '2011-06-15'}

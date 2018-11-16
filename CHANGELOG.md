@@ -6,7 +6,7 @@ Date format is Day-Month-Year
 ### Added
 
 ###### 15-11-2018
-- Version 1.5.0 - Add STS authentication support
+- Version 2.0.0 - Add STS authentication support
 - Remove KMS authentication
 - Remove assume role
 
