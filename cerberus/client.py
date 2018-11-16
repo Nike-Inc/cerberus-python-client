@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and* limitations
 """
 
 import requests
-import boto3
 
 from .aws_auth import AWSAuth
 from .user_auth import UserAuth
@@ -32,16 +31,13 @@ class CerberusClient(object):
         via the Auth Classes"""
     HEADERS = {'Content-Type': 'application/json'}
 
-    def __init__(self, cerberus_url, username=None, password=None, role_arn=None, region=None, assume_role=True, lambda_context=None, token=None):
+    def __init__(self, cerberus_url, username=None, password=None, region='us-west-2', token=None):
         """Username and password are optional, they are not needed for IAM Role Auth"""
         self.cerberus_url = cerberus_url
         self.username = username or ""
         self.password = password or ""
-        self.role_arn = role_arn
         self.region = region
         self.token = token
-        self.assume_role = assume_role
-        self.lambda_context = lambda_context
         if self.token is None:
             self._set_token()
 
@@ -53,19 +49,6 @@ class CerberusClient(object):
         if(not str.endswith(string, '/')):
             return str.join('', [string, '/'])
         return str(string)
-
-    def _set_lambda_context(self):
-        invoked_function_arn = self.lambda_context.invoked_function_arn
-        # A function arn looks like this: 'arn:aws:lambda:us-west-1:292800423415::function:foo:1'.
-        # The '1' at the end (the qualifier) is optional
-        arn = invoked_function_arn.split(':')
-        kwargs = {"FunctionName": arn[6]}
-        if(len(arn) > 7):
-            kwargs["Qualifier"] = arn[7]
-        lambda_client = boto3.client('lambda')
-        response = lambda_client.get_function_configuration(**kwargs)
-        self.role_arn = response['Role']
-        self.assume_role = False
 
     def _set_token(self):
         """Set the Cerberus token based on auth type"""
@@ -79,9 +62,7 @@ class CerberusClient(object):
             ua = UserAuth(self.cerberus_url, self.username, self.password)
             self.token = ua.get_token()
         else:
-            if self.lambda_context is not None:
-                self._set_lambda_context()
-            awsa = AWSAuth(self.cerberus_url, role_arn=self.role_arn, region=self.region, assume_role=self.assume_role)
+            awsa = AWSAuth(self.cerberus_url, region=self.region)
             self.token = awsa.get_token()
 
     def get_token(self):
@@ -526,7 +507,7 @@ class CerberusClient(object):
         """
         if not version:
             version = "CURRENT"
-
+        print(self.HEADERS)
         payload = {'versionId': str(version)}
         secret_resp = get_with_retry(str.join('', [self.cerberus_url, '/v1/secret/', secure_data_path]),
                                    params=payload, headers=self.HEADERS)

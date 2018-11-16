@@ -822,13 +822,6 @@ class TestCerberusClient(unittest.TestCase):
         assert_equals(anotherClient.get_token(), "dashboardtoken")
 
     @patch.dict('os.environ', {"CERBERUS_TOKEN": "dashboardtoken"})
-    def test_environment_variable_overrides_lambda_context(self):
-        anotherClient = CerberusClient(
-            self.cerberus_url, lambda_context="whatever object"
-        )
-        assert_equals(anotherClient.get_token(), "dashboardtoken")
-
-    @patch.dict('os.environ', {"CERBERUS_TOKEN": "dashboardtoken"})
     def test_environment_variable_does_not_overrides_token_parameter(self):
         anotherClient = CerberusClient(
             self.cerberus_url, token="overridetoken"
