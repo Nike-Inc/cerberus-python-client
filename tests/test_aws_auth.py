@@ -68,3 +68,30 @@ class TestAWSAuth(unittest.TestCase):
         mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('X-Amz-Security-Token'))
         mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('Authorization'))
         self.assertEqual(token, response_body['client_token'])
+
+    @patch('requests.post')
+    def test_get_token_with_custom_aws_creds(self, mock_post):
+        # Ideally this test should run in an environment with no AWS credentials to avoid false negative
+        response_body = {
+            "client_token": "9a8b5f0e-b41f-3fc7-1c94-3ed4a8057396",
+            "policies": [
+                "web"
+            ],
+            "metadata": {
+                "aws_iam_principal_arn": "arn:aws:iam::123:role/web"
+            },
+            "lease_duration": 3600,
+            "renewable": True
+        }
+        mock_post.return_value = self._mock_response(
+            content=json.dumps(response_body)
+        )
+        creds = botocore.credentials.Credentials('testid', 'testkey', 'testtoken')
+        auth_client = AWSAuth("https://cerberus.fake.com", region='us-west-2', aws_creds=creds)
+        mock_post.reset_mock()
+        token = auth_client.get_token()
+        mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
+        mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('X-Amz-Date'))
+        mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('X-Amz-Security-Token'))
+        mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('Authorization'))
+        self.assertEqual(token, response_body['client_token'])

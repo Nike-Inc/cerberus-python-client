@@ -31,13 +31,14 @@ class CerberusClient(object):
         via the Auth Classes"""
     HEADERS = {'Content-Type': 'application/json'}
 
-    def __init__(self, cerberus_url, username=None, password=None, region='us-west-2', token=None):
+    def __init__(self, cerberus_url, username=None, password=None, region='us-west-2', token=None, aws_creds=None):
         """Username and password are optional, they are not needed for IAM Role Auth"""
         self.cerberus_url = cerberus_url
         self.username = username or ""
         self.password = password or ""
         self.region = region
         self.token = token
+        self.aws_creds = aws_creds
         if self.token is None:
             self._set_token()
 
@@ -62,7 +63,7 @@ class CerberusClient(object):
             ua = UserAuth(self.cerberus_url, self.username, self.password)
             self.token = ua.get_token()
         else:
-            awsa = AWSAuth(self.cerberus_url, region=self.region)
+            awsa = AWSAuth(self.cerberus_url, region=self.region, aws_creds=self.aws_creds)
             self.token = awsa.get_token()
 
     def get_token(self):
