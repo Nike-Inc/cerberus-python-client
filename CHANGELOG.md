@@ -5,6 +5,11 @@ Date format is Day-Month-Year
 
 ### Added
 
+###### 15-11-2018
+- Version 2.0.0 - Add STS authentication support
+- Remove KMS authentication
+- Remove assume role
+
 ###### 22-10-2018
 - Version 1.4.0 - Add basic support for multiple mfa device options
 

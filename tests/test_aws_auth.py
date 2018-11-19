@@ -14,17 +14,13 @@ See the License for the specific language governing permissions and* limitations
 """
 
 # Stuff for tests...
-import base64
 import json
 import unittest
 
-import boto3
 import requests
+import botocore
 from mock import patch, ANY
-from moto import mock_kms
-from moto import mock_sts
 from .matcher import AnyDictWithKey
-from .mocks import MultiEndpointRequest
 
 from cerberus.aws_auth import AWSAuth
 
@@ -45,12 +41,9 @@ class TestAWSAuth(unittest.TestCase):
     def _mock_decrypt(self):
         pass
 
-    @patch('requests.get')
     @patch('requests.post')
-    @mock_kms
-    @mock_sts
-    def test_get_token(self, mock_post, mock_get):
-
+    @patch('botocore.session.Session.get_credentials')
+    def test_get_token(self, mock_get_credentials, mock_post):
         # Example Cerberus response.
         response_body = {
             "client_token": "9a8b5f0e-b41f-3fc7-1c94-3ed4a8057396",
@@ -58,92 +51,20 @@ class TestAWSAuth(unittest.TestCase):
                 "web"
             ],
             "metadata": {
-                "iam_principal_arn": "arn:aws:iam::123:role/web"
+                "aws_iam_principal_arn": "arn:aws:iam::123:role/web"
             },
             "lease_duration": 3600,
             "renewable": True
         }
-
-        iam_info_response_body = {
-            "Code" : "Success",
-            "LastUpdated" : "2017-11-29T21:11:45Z",
-            "InstanceProfileArn" : "arn:aws:iam::123:instance-profile/rolepath/instanceprofilename",
-            "InstanceProfileId" : "AIPAJURSEGIIGKUJSHNXY"
-        }
-
-        iam_security_credentials_response_body = "rolename"
-
-        client = boto3.client('kms', region_name='us-west-2')
-        key_data = client.create_key()
-        key_id = key_data['KeyMetadata']['KeyId']
-
-        cipher_data = client.encrypt(KeyId=key_id, Plaintext=json.dumps(response_body).encode())
-
-        mock_get.side_effect = [self._mock_response(content=iam_security_credentials_response_body),
-                                self._mock_response(content=json.dumps(iam_info_response_body) )]
-
         mock_post.return_value = self._mock_response(
-            content=json.dumps({'auth_data': base64.b64encode(cipher_data['CiphertextBlob']).decode()})
+            content=json.dumps(response_body)
         )
-
-        # Test the AWSAuth client leveraging default role ARN and region detection...
-        auth_client = AWSAuth("https://cerberus.fake.com", region='us-east-1')
+        mock_get_credentials.return_value = botocore.credentials.Credentials('testid', 'testkey', 'testtoken')
+        auth_client = AWSAuth("https://cerberus.fake.com", region='us-west-2')
         mock_post.reset_mock()
         token = auth_client.get_token()
-        mock_post.assert_called_once_with(ANY, data=ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
+        mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
+        mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('X-Amz-Date'))
+        mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('X-Amz-Security-Token'))
+        mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('Authorization'))
         self.assertEqual(token, response_body['client_token'])
-        self.assertEqual(auth_client.role_arn, "arn:aws:iam::123:role/rolepath/rolename")
-
-        # Now we'll make sure that it works w/ a supplied role ARN and region...
-        test_principal_arn = "arn:aws:iam::123456789012:role/test_role"
-
-        auth_client = AWSAuth("https://cerberus.fake.com", test_principal_arn, "us-east-1")
-        self.assertEqual(auth_client.role_arn, test_principal_arn)
-
-        mock_post.reset_mock()
-        token = auth_client.get_token()
-        mock_post.assert_called_once_with(ANY, data=ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
-        self.assertEqual(token, response_body['client_token'])
-
-    @patch('requests.get')
-    @patch('requests.post')
-    @patch.dict('os.environ', {'AWS_CONTAINER_CREDENTIALS_RELATIVE_URI': '/creds'})
-    @mock_kms
-    @mock_sts
-    def test_get_token_for_ecs(self, mock_post, mock_get):
-        credential_endpoint_res = {'RoleArn': 'arn:aws:iam::123456789012:role/test_role'}
-        metadata_endpoint_res = {'TaskARN': 'arn:aws:ecs:us-west-2:123456789012:task/1dc5c17a-422b-4dc4-b493-371970c6c4d6'}
-        res = {'http://169.254.170.2/creds': self._mock_response(content=json.dumps(credential_endpoint_res)),
-               'http://169.254.170.2/v2/metadata': self._mock_response(content=json.dumps(metadata_endpoint_res))}
-        mock_response = MultiEndpointRequest(res)
-        mock_get.side_effect = mock_response.get
-        # Example Cerberus response.
-        response_body = {
-            "client_token": "9a8b5f0e-b41f-3fc7-1c94-3ed4a8057396",
-            "policies": [
-                "web"
-            ],
-            "metadata": {
-                "iam_principal_arn": "arn:aws:iam::123:role/web"
-            },
-            "lease_duration": 3600,
-            "renewable": True
-        }
-
-        client = boto3.client('kms', region_name='us-west-2')
-        key_data = client.create_key()
-        key_id = key_data['KeyMetadata']['KeyId']
-
-        cipher_data = client.encrypt(KeyId=key_id, Plaintext=json.dumps(response_body).encode())
-
-        mock_post.return_value = self._mock_response(
-            content=json.dumps({'auth_data': base64.b64encode(cipher_data['CiphertextBlob']).decode()})
-        )
-
-        # Test the AWSAuth client leveraging default role ARN and region detection...
-        auth_client = AWSAuth("https://cerberus.fake.com")
-        mock_post.reset_mock()
-        token = auth_client.get_token()
-        mock_post.assert_called_once_with(ANY, data=ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
-        self.assertEqual(token, response_body['client_token'])
-        self.assertEqual(auth_client.role_arn, 'arn:aws:iam::123456789012:role/test_role')

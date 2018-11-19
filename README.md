@@ -51,29 +51,11 @@ from cerberus.client import CerberusClient
 #### Instantiate the Client
 
 
-Default IAM Role Authentication(EC2 instances or ECS tasks):
+IAM Role Authentication(Local, EC2, ECS, Lambda, etc.):
 
 ```python
 client = CerberusClient('https://my.cerberus.url')
 ```
-
-Assumed IAM Role Authentication:
-```python
-client = CerberusClient('https://my.cerberus.url', role_arn='arn:aws:iam::0000000000:role/role-name')
-```
-** Note: In this case, the client authenticates with Cerberus using the given role, then tries to assume that role in order to decrypt the Cerberus auth payload.
-
-IAM Role Authentication with IAM Role ARN(Lambda):
-```python
-client = CerberusClient('https://my.cerberus.url', role_arn='arn:aws:iam::0000000000:role/role-name', assume_role=False)
-```
-** Note: Unlike the default IAM Role Authentication constructor, this constructor will not attempt to figure out the role_arn, which may decrease overall latency. This the recommended constructor for Lambda.
-
-IAM Role Authentication with Lambda context:
-```python
-client = CerberusClient('https://my.cerberus.url', lambda_context=context)
-```
-** Note: This constructor may adds extra latency from pulling configuration from AWS.
 
 User Authentication:
 ```python
@@ -266,13 +248,6 @@ from cerberus.aws_auth import AWSAuth
 token = AWSAuth('https://my.cerberus.url').get_token()
 ```
 
-* Assumed IAM Role Authentication:
-```python
-from cerberus.aws_auth import AWSAuth
-token = AWSAuth('https://my.cerberus.url', 'arn:aws:iam::000000000:role/role-name').get_token()
-```
-** Note: The auth class authenticates with Cerberus using the given role, then tries to assume that role in order to decrypt the Cerberus auth payload.
-
 
 * User Authentication
 ```python
@@ -294,27 +269,6 @@ feature provided by AWS.
 Another option is to store Lambda secrets in Cerberus but only read them at Lambda deploy time, then storing them as encrypted 
 environmental variables, to avoid the extra Cerberus runtime latency.
 
-#### Prerequisites for Lambda
-
-The IAM role assigned to the Lambda function must contain the following policy statement in addition to the above KMS decrypt policy, this is so the Lambda can look up its metadata to automatically authenticate with the Cerberus IAM auth endpoint:
-
-```json
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Sid": "AllowGetRole",
-        "Effect": "Allow",
-        "Action": [
-          "iam:GetRole"
-        ],
-        "Resource": [
-          "*"
-        ]
-      }
-    ]
-  }
-```
 
 #### Lambda examples
 
@@ -325,17 +279,8 @@ from cerberus.client import CerberusClient
 secrets = None
 def lambda_handler(event, context):
     if secrets is None:
-        client = CerberusClient('https://dev.cerberus.nikecloud.com', role_arn=os.environ['role_arn'], assume_role=False)
+        client = CerberusClient('https://dev.cerberus.nikecloud.com')
         secrets = client.get_secrets_data("app/yourapplication/dbproperties")['dbpasswd']
-```
-Get secrets from Cerberus using Lambda context (extra latency from pulling configuration from AWS).
-```python
-from cerberus.client import CerberusClient
-secrets=None
-def lambda_handler(event, context):
-    if secrets is None:
-        client = CerberusClient('https://dev.cerberus.nikecloud.com', lambda_context=context)
-        secrets = client.get_secrets_data("app/yourapplication/dbproperties")
 ```
 
 

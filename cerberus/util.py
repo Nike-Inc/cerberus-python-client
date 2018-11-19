@@ -20,7 +20,7 @@ import json
 import requests
 import time
 
-default_retry_attempt_number = 3
+DEFAULT_RETRY_ATTEMPT_NUMBER = 3
 
 
 def throw_if_bad_response(response):
@@ -36,23 +36,23 @@ def throw_if_bad_response(response):
             raise CerberusClientException(msg)
 
 
-def get_with_retry(url, retry=default_retry_attempt_number, **kwargs):
+def get_with_retry(url, retry=DEFAULT_RETRY_ATTEMPT_NUMBER, **kwargs):
     return request_with_retry(url, 'get', retry, **kwargs)
 
 
-def post_with_retry(url, retry=default_retry_attempt_number, **kwargs):
+def post_with_retry(url, retry=DEFAULT_RETRY_ATTEMPT_NUMBER, **kwargs):
     return request_with_retry(url, 'post', retry, **kwargs)
 
 
-def put_with_retry(url, retry=default_retry_attempt_number, **kwargs):
+def put_with_retry(url, retry=DEFAULT_RETRY_ATTEMPT_NUMBER, **kwargs):
     return request_with_retry(url, 'put', retry, **kwargs)
 
 
-def delete_with_retry(url, retry=default_retry_attempt_number, **kwargs):
+def delete_with_retry(url, retry=DEFAULT_RETRY_ATTEMPT_NUMBER, **kwargs):
     return request_with_retry(url, 'delete', retry, **kwargs)
 
 
-def head_with_retry(url, retry=default_retry_attempt_number, **kwargs):
+def head_with_retry(url, retry=DEFAULT_RETRY_ATTEMPT_NUMBER, **kwargs):
     return request_with_retry(url, 'head', retry, **kwargs)
 
 

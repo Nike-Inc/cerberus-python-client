@@ -13,150 +13,48 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and* limitations under the License.*
 """
 
-import base64
-import json
-import re
-import os
+from botocore import session, awsrequest, auth
 
-import boto3
-import requests
-
-from . import CLIENT_VERSION
+from . import CerberusClientException, CLIENT_VERSION
 from .util import throw_if_bad_response, post_with_retry
 
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
-    cerberus_url = None
-    role_arn = None
-    region = None
-    assume_role = False
-
     HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
 
-    def __init__(self, cerberus_url, role_arn=None, region=None, assume_role=True):
+    def __init__(self, cerberus_url, region):
         self.cerberus_url = cerberus_url
-        self.set_auth(role_arn, region, assume_role)
+        self.region = region
 
-    def set_auth(self, role_arn=None, region=None, assume_role=True):
-        """Sets the variables needed for AWS Auth"""
-        is_ecs = 'AWS_CONTAINER_CREDENTIALS_RELATIVE_URI' in os.environ
-        if role_arn is None:
-            if is_ecs:
-                self.get_ecs_role_arn()
-            else:
-                self.get_instance_role_arn()
+    def _get_v4_signed_headers(self):
+        """Returns V4 signed get-caller-identity request headers"""
+        boto_session = session.Session()
+        credentials = boto_session.get_credentials()
+        if credentials is None:
+            raise CerberusClientException("Unable to locate AWS credentials")
         else:
-            self.role_arn = role_arn
-            self.assume_role = assume_role
+            readonly_credentials = credentials.get_frozen_credentials()
 
-        if region is None:
-            self.region = self.get_ecs_region() if is_ecs else self.get_region()
-        else:
-            self.region = region
+        # hardcode get-caller-identity request
+        data = {'Action': 'GetCallerIdentity', 'Version': '2011-06-15'}
+        url = 'https://sts.{}.amazonaws.com/'.format(self.region)
+        request_object = awsrequest.AWSRequest(method='POST', url=url, data=data)
 
-    def get_ecs_role_arn(self):
-        relative_uri = os.environ['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
-        self.role_arn = requests.get('http://169.254.170.2'+relative_uri).json()['RoleArn']
-
-    def get_instance_role_arn(self):
-        sts_client = boto3.client('sts')
-        role_name = self.get_role_name()
-
-        instance_profile_arn = requests.get('http://169.254.169.254/latest/meta-data/iam/info').json()['InstanceProfileArn']
-        m = re.match(r"arn:aws:iam::(.*?):instance-profile/(.*)", instance_profile_arn)
-        account_id = m.group(1)
-        instance_profile_path = m.group(2)
-
-        if "/" in instance_profile_path:
-            role_path = instance_profile_path.rsplit('/', 1)[0]
-            role_with_path = role_path + "/" + role_name
-        else:
-            role_with_path = role_name
-
-        self.role_arn = sts_client.get_caller_identity().get('Arn') if role_name is False \
-            else "arn:aws:iam::" + account_id + ":role/" + role_with_path
-
-    def get_role_name(self):
-        """Returns role name from either ec2 or lambda"""
-        try:
-            # This is an EC2 instance, get the role name from the metadata service
-            return requests.get('http://169.254.169.254/latest/meta-data/iam/security-credentials/').text
-        except:
-            pass
-
-        try:
-            # This is a Lambda, iam:GetRole is needed for this to work
-            iam_client = boto3.client('iam')
-            sts_client = boto3.client('sts')
-            current_identity = sts_client.get_caller_identity()
-            role_name = str(current_identity['Arn']).split('/')[-2]
-            response = iam_client.get_role(RoleName=role_name)
-            role_arn = response['Role']['Arn']
-            role_arn_match = re.match(r'arn:aws:iam::.*?:(?:role|instance-profile)/(.*)', role_arn)
-            return role_arn_match.group(1)
-        except:
-            pass
-
-        return False
-
-    def get_region(self):
-        """Returns region from either ec2 or lambda"""
-        try:
-            # This is an EC2 instnace, get the region from the metadata service
-            region = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document').json()['region']
-            return region
-        except:
-            pass
-
-        try:
-            # This is a Lambda, get the region from the session
-            session = boto3.session.Session()
-            return session.region_name
-        except:
-            pass
-
-        return False
-
-    def get_ecs_region(self):
-        """Returns region from ecs task"""
-        # This is an ECS task, get the region from the metadata service
-        task_arn = requests.get('http://169.254.170.2/v2/metadata').json()['TaskARN']
-        m = re.match('arn:aws:ecs:(?P<region>.*):(.*):task/(.*)', task_arn)
-        return m.group('region')
+        signer = auth.SigV4Auth(readonly_credentials, 'sts', self.region)
+        signer.add_auth(request_object)
+        return request_object.headers
 
     def get_token(self):
         """Returns a client token from Cerberus"""
-        request_body = {
-            'iam_principal_arn': self.role_arn,
-            'region': self.region
-        }
-        encrypted_resp = post_with_retry(self.cerberus_url + '/v2/auth/iam-principal', data=json.dumps(request_body),
-                                       headers=self.HEADERS)
+        signed_headers = self._get_v4_signed_headers()
+        for header in self.HEADERS:
+            signed_headers[header] = self.HEADERS[header]
 
-        if encrypted_resp.status_code != 200:
-            throw_if_bad_response(encrypted_resp)
+        resp = post_with_retry(self.cerberus_url + '/v2/auth/sts-identity', headers=signed_headers)
+        throw_if_bad_response(resp)
 
-        auth_data = encrypted_resp.json()['auth_data']
-        if not self.assume_role:
-            client = boto3.client('kms', region_name=self.region)
-        else:
-            sts = boto3.client('sts')
-            role_data = sts.assume_role(
-                RoleArn=self.role_arn,
-                RoleSessionName='CerberusAssumeRole'
-            )
+        token = resp.json()['client_token']
+        iam_principal_arn = resp.json()['metadata']['aws_iam_principal_arn']
+        print('Successful authenticated with Cerberus as {}'.format(iam_principal_arn))
 
-            creds = role_data['Credentials']
-
-            client = boto3.client(
-                'kms',
-                region_name=self.region,
-                aws_access_key_id=creds['AccessKeyId'],
-                aws_secret_access_key=creds['SecretAccessKey'],
-                aws_session_token=creds['SessionToken']
-            )
-
-        response = client.decrypt(CiphertextBlob=base64.b64decode(auth_data))
-
-        token = json.loads(response['Plaintext'].decode('utf-8'))['client_token']
         return token
