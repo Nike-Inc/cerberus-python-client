@@ -22,18 +22,21 @@ class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
     HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
 
-    def __init__(self, cerberus_url, region):
+    def __init__(self, cerberus_url, region, aws_session=None):
         self.cerberus_url = cerberus_url
         self.region = region
+        self.aws_session = aws_session
 
     def _get_v4_signed_headers(self):
         """Returns V4 signed get-caller-identity request headers"""
-        boto_session = session.Session()
-        credentials = boto_session.get_credentials()
-        if credentials is None:
-            raise CerberusClientException("Unable to locate AWS credentials")
+        if self.aws_session is None:
+            boto_session = session.Session()
+            creds = boto_session.get_credentials()
         else:
-            readonly_credentials = credentials.get_frozen_credentials()
+            creds = self.aws_session.get_credentials()
+        if creds is None:
+            raise CerberusClientException("Unable to locate AWS credentials")
+        readonly_credentials = creds.get_frozen_credentials()
 
         # hardcode get-caller-identity request
         data = {'Action': 'GetCallerIdentity', 'Version': '2011-06-15'}
