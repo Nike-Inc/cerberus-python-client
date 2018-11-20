@@ -32,7 +32,11 @@ class CerberusClient(object):
     HEADERS = {'Content-Type': 'application/json'}
 
     def __init__(self, cerberus_url, username=None, password=None, region='us-west-2', token=None, aws_session=None):
-        """Username and password are optional, they are not needed for IAM Role Auth"""
+        """
+        Username and password are optional, they are not needed for IAM Role Auth. If aws_session is set with
+        a botocore.session.Session object, the Cerberus client will sign the request using the session provided
+        instead of the default session.
+        """
         self.cerberus_url = cerberus_url
         self.username = username or ""
         self.password = password or ""
