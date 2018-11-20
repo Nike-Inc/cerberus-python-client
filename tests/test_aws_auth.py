@@ -70,7 +70,7 @@ class TestAWSAuth(unittest.TestCase):
         self.assertEqual(token, response_body['client_token'])
 
     @patch('requests.post')
-    def test_get_token_with_custom_aws_creds(self, mock_post):
+    def test_get_token_with_custom_aws_session(self, mock_post):
         # Ideally this test should run in an environment with no AWS credentials to avoid false negative
         response_body = {
             "client_token": "9a8b5f0e-b41f-3fc7-1c94-3ed4a8057396",
@@ -86,8 +86,9 @@ class TestAWSAuth(unittest.TestCase):
         mock_post.return_value = self._mock_response(
             content=json.dumps(response_body)
         )
-        creds = botocore.credentials.Credentials('testid', 'testkey', 'testtoken')
-        auth_client = AWSAuth("https://cerberus.fake.com", region='us-west-2', aws_creds=creds)
+        session = botocore.session.Session()
+        session.set_credentials('testid', 'testkey', 'testtoken')
+        auth_client = AWSAuth("https://cerberus.fake.com", region='us-west-2', aws_session=session)
         mock_post.reset_mock()
         token = auth_client.get_token()
         mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('X-Cerberus-Client'))
