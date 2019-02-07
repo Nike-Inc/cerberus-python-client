@@ -512,7 +512,6 @@ class CerberusClient(object):
         """
         if not version:
             version = "CURRENT"
-        print(self.HEADERS)
         payload = {'versionId': str(version)}
         secret_resp = get_with_retry(str.join('', [self.cerberus_url, '/v1/secret/', secure_data_path]),
                                    params=payload, headers=self.HEADERS)
