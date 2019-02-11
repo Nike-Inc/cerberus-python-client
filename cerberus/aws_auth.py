@@ -17,6 +17,7 @@ from botocore import session, awsrequest, auth
 
 from . import CerberusClientException, CLIENT_VERSION
 from .util import throw_if_bad_response, post_with_retry
+from collections import OrderedDict
 
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
@@ -39,7 +40,7 @@ class AWSAuth(object):
         readonly_credentials = creds.get_frozen_credentials()
 
         # hardcode get-caller-identity request
-        data = {'Action': 'GetCallerIdentity', 'Version': '2011-06-15'}
+        data = OrderedDict((('Action','GetCallerIdentity'), ('Version', '2011-06-15')))
         url = 'https://sts.{}.amazonaws.com/'.format(self.region)
         request_object = awsrequest.AWSRequest(method='POST', url=url, data=data)
 
