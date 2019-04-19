@@ -21,9 +21,12 @@ from . import CerberusClientException, CLIENT_VERSION
 from .util import throw_if_bad_response, get_with_retry, post_with_retry, put_with_retry, delete_with_retry, head_with_retry
 import ast
 import json
+import logging
 import warnings
 import os
 
+
+logger = logging.getLogger(__name__)
 
 class CerberusClient(object):
     """ Cerberus Python Client for interacting with
@@ -59,7 +62,7 @@ class CerberusClient(object):
         """Set the Cerberus token based on auth type"""
         try:
             self.token = os.environ['CERBERUS_TOKEN']
-            print("Overriding Cerberus token with environment variable.")
+            logger.info("Overriding Cerberus token with environment variable.")
             return
         except:
             pass

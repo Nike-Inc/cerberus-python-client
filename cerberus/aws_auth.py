@@ -19,6 +19,10 @@ from . import CerberusClientException, CLIENT_VERSION
 from .util import throw_if_bad_response, post_with_retry
 from collections import OrderedDict
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
     HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
@@ -59,6 +63,6 @@ class AWSAuth(object):
 
         token = resp.json()['client_token']
         iam_principal_arn = resp.json()['metadata']['aws_iam_principal_arn']
-        print('Successful authenticated with Cerberus as {}'.format(iam_principal_arn))
+        logger.info('Successfully authenticated with Cerberus as {}'.format(iam_principal_arn))
 
         return token

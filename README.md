@@ -62,6 +62,37 @@ User Authentication:
 client = CerberusClient('https://my.cerberus.url', username, password)
 ```
 
+Authentication Through an Assumed Role:
+```python
+sts = boto3.client('sts')
+role_data = sts.assume_role(RoleArn = 'arn:aws:iam::0123456789:role/CerberusRole', RoleSessionName = "CerberusAssumeRole")
+creds = role_data['Credentials']
+
+# Cerberus can be passed a botocore or boto3 session to use for authenticating with the Cerberus Server.
+cerberus_session = boto3.session.Session(
+    region_name = 'us-east-1',
+    aws_access_key_id = creds['AccessKeyId'],
+    aws_secret_access_key = creds['SecretAccessKey'],
+    aws_session_token = creds['SessionToken']
+)
+
+client = CerberusClient(cerberus_url='https://my.cerberus.url', aws_session=cerberus_session)
+
+```
+
+#### Activate Log Messages
+
+```python
+from cerberus.client import CerberusClient
+import logging
+
+# Logging has to be imported and the root level logger needs to be configured
+#  before you instantiate the client
+logging.basicConfig(level=logging.INFO)
+
+client = CerberusClient('https://my.cerberus.url')
+```
+
 #### Read Secrets from Cerberus
 
 To list what secrets are in a safe deposit box:

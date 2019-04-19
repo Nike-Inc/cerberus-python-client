@@ -5,6 +5,12 @@ Date format is Day-Month-Year
 
 ### Added
 
+###### 19-04-2019
+- Version 2.2.0
+- Changed informational output from print statements to logging statements.
+- Documented how to activate logging messages
+- Documented how to pass a boto session object for the cerberus client to use.
+
 ###### 15-11-2018
 - Version 2.0.0 - Add STS authentication support
 - Remove KMS authentication
