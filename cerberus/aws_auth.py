@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and* limitations under the License.*
 """
 
+# For python 2.7
+from __future__ import print_function
 from botocore import session, awsrequest, auth
 import logging
 import sys

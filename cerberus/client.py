@@ -13,19 +13,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and* limitations under the License.*
 """
 
+# For python 2.7
+from __future__ import print_function
 import requests
 
 from .aws_auth import AWSAuth
 from .user_auth import UserAuth
 from . import CerberusClientException, CLIENT_VERSION
 from .util import throw_if_bad_response, get_with_retry, post_with_retry, put_with_retry, delete_with_retry, head_with_retry
+
 import ast
 import json
 import logging
 import sys
 import warnings
 import os
-
 
 logger = logging.getLogger(__name__)
 
