@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and* limitations
 """
 
 from botocore import session, awsrequest, auth
+import logging
+import sys
 
 from . import CerberusClientException, CLIENT_VERSION
 from .util import throw_if_bad_response, post_with_retry
 from collections import OrderedDict
 
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +28,11 @@ class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
     HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
 
-    def __init__(self, cerberus_url, region, aws_session=None):
+    def __init__(self, cerberus_url, region, aws_session=None, verbose=None):
         self.cerberus_url = cerberus_url
         self.region = region
         self.aws_session = aws_session
+        self.verbose = verbose
 
     def _get_v4_signed_headers(self):
         """Returns V4 signed get-caller-identity request headers"""
@@ -63,6 +65,8 @@ class AWSAuth(object):
 
         token = resp.json()['client_token']
         iam_principal_arn = resp.json()['metadata']['aws_iam_principal_arn']
+        if self.verbose:
+            print('Successfully authenticated with Cerberus as {}'.format(iam_principal_arn), file=sys.stderr)
         logger.info('Successfully authenticated with Cerberus as {}'.format(iam_principal_arn))
 
         return token

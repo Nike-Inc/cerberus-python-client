@@ -93,6 +93,13 @@ logging.basicConfig(level=logging.INFO)
 client = CerberusClient('https://my.cerberus.url')
 ```
 
+#### Surpress debug messages
+```python
+# By default the Cerberus client will log some helpful messages to stderr
+# setting verbose to False will surpress these messages.
+client = CerberusClient('https://my.cerberus.url', verbose=False)
+```
+
 #### Read Secrets from Cerberus
 
 To list what secrets are in a safe deposit box:
