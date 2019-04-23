@@ -13,17 +13,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and* limitations under the License.*
 """
 
+# For python 2.7
+from __future__ import print_function
 import requests
 
 from .aws_auth import AWSAuth
 from .user_auth import UserAuth
 from . import CerberusClientException, CLIENT_VERSION
 from .util import throw_if_bad_response, get_with_retry, post_with_retry, put_with_retry, delete_with_retry, head_with_retry
+
 import ast
 import json
+import logging
+import sys
 import warnings
 import os
 
+logger = logging.getLogger(__name__)
 
 class CerberusClient(object):
     """ Cerberus Python Client for interacting with
@@ -31,17 +37,27 @@ class CerberusClient(object):
         via the Auth Classes"""
     HEADERS = {'Content-Type': 'application/json'}
 
-    def __init__(self, cerberus_url, username=None, password=None, region='us-west-2', token=None, aws_session=None):
+    def __init__(self, cerberus_url, username=None, password=None,
+                 region='us-west-2', token=None, aws_session=None,
+                 verbose=None):
         """
         Username and password are optional, they are not needed for IAM Role Auth. If aws_session is set with
         a botocore.session.Session object, the Cerberus client will sign the request using the session provided
         instead of the default session.
+
+        verbose (default True) controls if the cerberus library will output some debuging statements to the
+        console (sys.stderr).
+        
         """
         self.cerberus_url = cerberus_url
         self.username = username or ""
         self.password = password or ""
         self.region = region
         self.token = token
+        if verbose is None or type(verbose) != bool:
+            self.verbose = True
+        else:
+            self.verbose = verbose
         self.aws_session = aws_session
         if self.token is None:
             self._set_token()
@@ -59,7 +75,9 @@ class CerberusClient(object):
         """Set the Cerberus token based on auth type"""
         try:
             self.token = os.environ['CERBERUS_TOKEN']
-            print("Overriding Cerberus token with environment variable.")
+            if self.verbose:
+                print("Overriding Cerberus token with environment variable.", file=sys.stderr)
+            logger.info("Overriding Cerberus token with environment variable.")
             return
         except:
             pass
@@ -67,7 +85,7 @@ class CerberusClient(object):
             ua = UserAuth(self.cerberus_url, self.username, self.password)
             self.token = ua.get_token()
         else:
-            awsa = AWSAuth(self.cerberus_url, region=self.region, aws_session=self.aws_session)
+            awsa = AWSAuth(self.cerberus_url, region=self.region, aws_session=self.aws_session, verbose=self.verbose)
             self.token = awsa.get_token()
 
     def get_token(self):
