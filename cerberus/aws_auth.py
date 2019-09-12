@@ -69,7 +69,7 @@ class AWSAuth(object):
         token = resp.json()['client_token']
         iam_principal_arn = resp.json()['metadata']['aws_iam_principal_arn']
         if self.verbose:
-            logger.debug('Successfully authenticated with Cerberus as {}'.format(iam_principal_arn), file=sys.stderr)
+            print('Successfully authenticated with Cerberus as {}'.format(iam_principal_arn), file=sys.stderr)
         logger.info('Successfully authenticated with Cerberus as {}'.format(iam_principal_arn))
 
         return token

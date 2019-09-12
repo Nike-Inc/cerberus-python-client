@@ -80,7 +80,7 @@ class CerberusClient(object):
         try:
             self.token = os.environ['CERBERUS_TOKEN']
             if self.verbose:
-                logger.debug("Overriding Cerberus token with environment variable.", file=sys.stderr)
+                print("Overriding Cerberus token with environment variable.", file=sys.stderr)
             logger.info("Overriding Cerberus token with environment variable.")
             return
         except Exception as e:
