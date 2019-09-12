@@ -20,7 +20,8 @@ import requests
 from .aws_auth import AWSAuth
 from .user_auth import UserAuth
 from . import CerberusClientException, CLIENT_VERSION
-from .util import throw_if_bad_response, get_with_retry, post_with_retry, put_with_retry, delete_with_retry, head_with_retry
+from .util import throw_if_bad_response, get_with_retry, post_with_retry, put_with_retry, delete_with_retry, \
+    head_with_retry
 
 import ast
 import json
@@ -29,7 +30,9 @@ import sys
 import warnings
 import os
 
+
 logger = logging.getLogger(__name__)
+
 
 class CerberusClient(object):
     """ Cerberus Python Client for interacting with
@@ -65,9 +68,10 @@ class CerberusClient(object):
         self.HEADERS['X-Cerberus-Token'] = self.token
         self.HEADERS['X-Cerberus-Client'] = 'CerberusPythonClient/' + CLIENT_VERSION
 
+    # noinspection PyMethodMayBeStatic
     def _add_slash(self, string=None):
         """ if a string doesn't end in a '/' add one """
-        if(not str.endswith(string, '/')):
+        if not str.endswith(string, '/'):
             return str.join('', [string, '/'])
         return str(string)
 
@@ -76,11 +80,11 @@ class CerberusClient(object):
         try:
             self.token = os.environ['CERBERUS_TOKEN']
             if self.verbose:
-                print("Overriding Cerberus token with environment variable.", file=sys.stderr)
+                logger.debug("Overriding Cerberus token with environment variable.", file=sys.stderr)
             logger.info("Overriding Cerberus token with environment variable.")
             return
-        except:
-            pass
+        except Exception as e:
+            logger.debug(str(e))
         if self.username:
             ua = UserAuth(self.cerberus_url, self.username, self.password)
             self.token = ua.get_token()
@@ -98,7 +102,7 @@ class CerberusClient(object):
         Roles are permission levels that are granted to IAM or User Groups.  Associating the id for the write role
           would allow that IAM or User Group to write in the safe deposit box."""
         roles_resp = get_with_retry(self.cerberus_url + '/v1/role',
-                                  headers=self.HEADERS)
+                                    headers=self.HEADERS)
 
         throw_if_bad_response(roles_resp)
         return roles_resp.json()
@@ -124,7 +128,7 @@ class CerberusClient(object):
     def get_categories(self):
         """ Return a list of categories that a safe deposit box can belong to"""
         sdb_resp = get_with_retry(self.cerberus_url + '/v1/category',
-                                headers=self.HEADERS)
+                                  headers=self.HEADERS)
 
         throw_if_bad_response(sdb_resp)
         return sdb_resp.json()
@@ -175,14 +179,14 @@ class CerberusClient(object):
         Keyword arguments:
         sdb_id -- this is the id of the safe deposit box, not the path."""
         sdb_resp = delete_with_retry(self.cerberus_url + '/v2/safe-deposit-box/' + sdb_id,
-                                   headers=self.HEADERS)
+                                     headers=self.HEADERS)
         throw_if_bad_response(sdb_resp)
         return sdb_resp
 
     def get_sdbs(self):
         """ Return a list of each SDB the client is authorized to view"""
         sdb_resp = get_with_retry(self.cerberus_url + '/v2/safe-deposit-box',
-                                headers=self.HEADERS)
+                                  headers=self.HEADERS)
 
         throw_if_bad_response(sdb_resp)
         return sdb_resp.json()
@@ -246,7 +250,7 @@ class CerberusClient(object):
         sdb_id -- this is the id of the safe deposit box, not the path.
         """
         sdb_resp = get_with_retry(self.cerberus_url + '/v2/safe-deposit-box/' + sdb_id,
-                                headers=self.HEADERS)
+                                  headers=self.HEADERS)
 
         throw_if_bad_response(sdb_resp)
 
@@ -271,7 +275,7 @@ class CerberusClient(object):
     def get_sdb_secret_version_paths(self, sdb_id):
         """ Get SDB secret version paths.  This function takes the sdb_id """
         sdb_resp = get_with_retry(str.join('', [self.cerberus_url, '/v1/sdb-secret-version-paths/', sdb_id]),
-                                headers=self.HEADERS)
+                                  headers=self.HEADERS)
 
         throw_if_bad_response(sdb_resp)
 
@@ -323,16 +327,16 @@ class CerberusClient(object):
 
         data = json.encoder.JSONEncoder().encode(temp_data)
         sdb_resp = put_with_retry(self.cerberus_url + '/v2/safe-deposit-box/' + sdb_id, data=str(data),
-                                headers=self.HEADERS)
+                                  headers=self.HEADERS)
 
         throw_if_bad_response(sdb_resp)
         return sdb_resp.json()
 
-###------ Files ------###
+    """------ Files ------"""
     def delete_file(self, secure_data_path):
         """Delete a file at the given secure data path"""
         secret_resp = delete_with_retry(self.cerberus_url + '/v1/secure-file/' + secure_data_path,
-                                      headers=self.HEADERS)
+                                        headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp
 
@@ -343,7 +347,7 @@ class CerberusClient(object):
 
         payload = {'versionId': str(version)}
         secret_resp = head_with_retry(str.join('', [self.cerberus_url, '/v1/secure-file/', secure_data_path]),
-                                    params=payload, headers=self.HEADERS)
+                                      params=payload, headers=self.HEADERS)
 
         throw_if_bad_response(secret_resp)
 
@@ -362,12 +366,13 @@ class CerberusClient(object):
 
         payload = {'versionId': str(version)}
         secret_resp = get_with_retry(str.join('', [self.cerberus_url, '/v1/secure-file/', secure_data_path]),
-                                   params=payload, headers=self.HEADERS)
+                                     params=payload, headers=self.HEADERS)
 
         throw_if_bad_response(secret_resp)
 
         return secret_resp
 
+    # noinspection PyMethodMayBeStatic
     def _parse_metadata_filename(self, metadata):
         """
         Parse the header metadata to pull out the filename and then store it under the key 'filename'
@@ -423,8 +428,8 @@ class CerberusClient(object):
 
         offset = 0
         # Prime the versions dictionary so that all the logic can happen in the loop
-        versions = {'has_next': True, 'next_offset': 0}
-        while (versions['has_next']):
+        versions = {'has_next': True, 'next_offset': offset}
+        while versions['has_next']:
             offset = versions['next_offset']
             versions = self.get_file_versions(secure_data_path, limit, offset)
             for summary in versions['secure_data_version_summaries']:
@@ -459,7 +464,7 @@ class CerberusClient(object):
         #  always end in a '/'.
         secure_data_path = self._add_slash(secure_data_path)
         secret_resp = get_with_retry(self.cerberus_url + '/v1/secure-files/' + secure_data_path,
-                                   params=payload, headers=self.HEADERS)
+                                     params=payload, headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp.json()
 
@@ -488,15 +493,15 @@ class CerberusClient(object):
             headers.__delitem__('Content-Type')
 
         secret_resp = post_with_retry(self.cerberus_url + '/v1/secure-file/' + secure_data_path,
-                                    files=data, headers=headers)
+                                      files=data, headers=headers)
         throw_if_bad_response(secret_resp)
         return secret_resp
 
-###------ Secrets -----####
+    """------ Secrets -----"""
     def delete_secret(self, secure_data_path):
         """Delete a secret from the given secure data path"""
         secret_resp = delete_with_retry(self.cerberus_url + '/v1/secret/' + secure_data_path,
-                                      headers=self.HEADERS)
+                                        headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp
 
@@ -532,7 +537,7 @@ class CerberusClient(object):
             version = "CURRENT"
         payload = {'versionId': str(version)}
         secret_resp = get_with_retry(str.join('', [self.cerberus_url, '/v1/secret/', secure_data_path]),
-                                   params=payload, headers=self.HEADERS)
+                                     params=payload, headers=self.HEADERS)
 
         throw_if_bad_response(secret_resp)
 
@@ -580,7 +585,7 @@ class CerberusClient(object):
 
         payload = {'limit': str(limit), 'offset': str(offset)}
         secret_resp = get_with_retry(str.join('', [self.cerberus_url, '/v1/secret-versions/', secure_data_path]),
-                                   params=payload, headers=self.HEADERS)
+                                     params=payload, headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp.json()
 
@@ -593,8 +598,8 @@ class CerberusClient(object):
 
         offset = 0
         # Prime the versions dictionary so that all the logic can happen in the loop
-        versions = {'has_next': True, 'next_offset': 0}
-        while (versions['has_next']):
+        versions = {'has_next': True, 'next_offset': offset}
+        while versions['has_next']:
             offset = versions['next_offset']
             versions = self.get_secret_versions(secure_data_path, limit, offset)
             for summary in versions['secure_data_version_summaries']:
@@ -617,7 +622,7 @@ class CerberusClient(object):
         #  always end in a '/'.
         secure_data_path = self._add_slash(secure_data_path)
         secret_resp = get_with_retry(self.cerberus_url + '/v1/secret/' + secure_data_path + '?list=true',
-                                   headers=self.HEADERS)
+                                     headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp.json()
 
@@ -638,7 +643,7 @@ class CerberusClient(object):
         if merge:
             data = self.secret_merge(secure_data_path, secret)
         secret_resp = post_with_retry(self.cerberus_url + '/v1/secret/' + secure_data_path,
-                                    data=str(data), headers=self.HEADERS)
+                                      data=str(data), headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
         return secret_resp
 

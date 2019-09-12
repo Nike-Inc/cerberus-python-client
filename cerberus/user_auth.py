@@ -13,10 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and* limitations under the License.*
 """
 
-import requests
+import logging
+
 from . import CerberusClientException, CLIENT_VERSION
 
 from .util import throw_if_bad_response, get_with_retry, post_with_retry
+
+
+logger = logging.getLogger(__name__)
 
 
 class UserAuth(object):
@@ -28,12 +32,11 @@ class UserAuth(object):
         self.username = username
         self.password = password
 
-
     def get_auth(self):
         """Returns auth response which has client token unless MFA is required"""
         auth_resp = get_with_retry(self.cerberus_url + '/v2/auth/user',
-                                 auth=(self.username, self.password),
-                                 headers=self.HEADERS)
+                                   auth=(self.username, self.password),
+                                   headers=self.HEADERS)
 
         if auth_resp.status_code != 200:
             throw_if_bad_response(auth_resp)
@@ -60,17 +63,17 @@ class UserAuth(object):
             selection = "0"
             x = 1
         else:
-            print("Found the following MFA devices")
-            x=0
+            logger.info("Found the following MFA devices")
+            x = 0
             for device in devices:
-                print("{0}: {1}".format(x, device['name']))
+                logger.info("{0}: {1}".format(x, device['name']))
                 x = x + 1
 
             selection = input("Enter a selection: ")
         if selection.isdigit():
-            selection_num=int(str(selection))
+            selection_num = int(str(selection))
         else:
-            raise CerberusClientException( str.join('', ["Selection: '", selection,"' is not a number"]))
+            raise CerberusClientException(str.join('', ["Selection: '", selection, "' is not a number"]))
 
         if (selection_num >= x) or (selection_num < 0):
             raise CerberusClientException(str.join('', ["Selection: '", str(selection_num), "' is out of range"]))
