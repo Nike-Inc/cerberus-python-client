@@ -63,10 +63,10 @@ class UserAuth(object):
             selection = "0"
             x = 1
         else:
-            logger.info("Found the following MFA devices")
+            print("Found the following MFA devices")
             x = 0
             for device in devices:
-                logger.info("{0}: {1}".format(x, device['name']))
+                print("{0}: {1}".format(x, device['name']))
                 x = x + 1
 
             selection = input("Enter a selection: ")
