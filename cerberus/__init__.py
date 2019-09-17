@@ -3,7 +3,7 @@ import logging
 
 __all__ = ['client', 'user_auth', 'aws_auth', 'util']
 
-CLIENT_VERSION = '2.2.0'
+CLIENT_VERSION = '2.3.0'
 
 class CerberusClientException(Exception):
     """Wrap third-party exceptions expected by the Cerberus client."""
