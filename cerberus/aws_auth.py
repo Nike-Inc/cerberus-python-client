@@ -26,6 +26,7 @@ from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
+
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
     HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
@@ -48,7 +49,7 @@ class AWSAuth(object):
         readonly_credentials = creds.get_frozen_credentials()
 
         # hardcode get-caller-identity request
-        data = OrderedDict((('Action','GetCallerIdentity'), ('Version', '2011-06-15')))
+        data = OrderedDict((('Action', 'GetCallerIdentity'), ('Version', '2011-06-15')))
         url = 'https://sts.{}.amazonaws.com/'.format(self.region)
         request_object = awsrequest.AWSRequest(method='POST', url=url, data=data)
 
