@@ -317,7 +317,7 @@ from cerberus.client import CerberusClient
 secrets = None
 def lambda_handler(event, context):
     if secrets is None:
-        client = CerberusClient('https://dev.cerberus.nikecloud.com')
+        client = CerberusClient('https://my.cerberus.url')
         secrets = client.get_secrets_data("app/yourapplication/dbproperties")['dbpasswd']
 ```
 
@@ -336,7 +336,7 @@ $ nosetests --verbosity=2 tests/
 The easiest way to locally test the Python client is to first authenticate with Cerberus through the dashboard, then use your dashboard authentication token to make subsequent calls. See examples below.
 ```python
 from cerberus.client import CerberusClient
-client = CerberusClient('https://dev.cerberus.nikecloud.com') # This will work on an EC2 instance. But it will fail on local when it tries to call the metadata endpoint.
+client = CerberusClient('https://my.cerberus.url') # This will work on an EC2 instance. But it will fail on local when it tries to call the metadata endpoint.
 ```
 Without changing any code, set the `CERBERUS_TOKEN` system environment variable:
 ```bash
@@ -344,12 +344,12 @@ $ export CERBERUS_TOKEN='mytoken'
 ```
 ```python
 from cerberus.client import CerberusClient
-client = CerberusClient('https://dev.cerberus.nikecloud.com') # On local, the client will pick up the environment variable that was set earlier. When it's deployed to an EC2 instance that doesn't have the `CERBERUS_TOKEN` system environment variable, it'll automatically switch to authenticating using the metadata endpoint.
+client = CerberusClient('https://my.cerberus.url') # On local, the client will pick up the environment variable that was set earlier. When it's deployed to an EC2 instance that doesn't have the `CERBERUS_TOKEN` system environment variable, it'll automatically switch to authenticating using the metadata endpoint.
 ```
 Alternatively, you can pass in the token directly.
 ```python
 from cerberus.client import CerberusClient
-client = CerberusClient('https://dev.cerberus.nikecloud.com', token='mytoken')
+client = CerberusClient('https://my.cerberus.url', token='mytoken')
 ```
 Refer to the "local development" section at [Quick Start](http://engineering.nike.com/cerberus/docs/user-guide/quick-start) if you're having trouble getting a token.
 
