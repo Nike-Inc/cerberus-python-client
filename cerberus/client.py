@@ -481,7 +481,7 @@ class CerberusClient(object):
         """
 
         # Parse out the filename from the path
-        filename = secure_data_path.rsplit('/', 1)
+        filename = secure_data_path.rsplit('/', 1)[-1]
 
         if content_type:
             data = {'file-content': (filename, filehandle, content_type)}
