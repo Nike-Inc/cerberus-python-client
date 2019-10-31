@@ -5,6 +5,13 @@ Date format is Day-Month-Year
 
 ### Added
 
+###### 30-10-2019
+- Version 2.3.2
+  - Added unit tests for file upload
+  - Switched requirements-dev.txt to use https instead of git for grabbing the moto library.  This removes the requirement that you have an ssh key that works with github.
+- Version 2.3.1
+  - Bugfix around file upload 
+
 ###### 19-04-2019
 - Version 2.2.0
 - Changed informational output from print statements to logging statements.

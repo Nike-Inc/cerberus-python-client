@@ -18,16 +18,22 @@ import ast
 import json
 import unittest
 import platform
+from os.path import basename
 
 import requests
 import mock
-from mock import patch, ANY
-from nose.tools import assert_equals, assert_in
+from mock import patch, ANY, mock_open
+from nose.tools import assert_equals, assert_in, assert_is_not
 from .matcher import AnyDictWithKey
 
 from cerberus import CerberusClientException
 from cerberus.client import CerberusClient
 
+# Use the right builtins module for patching
+if int(platform.python_version_tuple()[0]) < 3:
+    builtins_str = "__builtin__"
+else:
+    builtins_str = "builtins"
 
 class TestCerberusClient(unittest.TestCase):
     """Class to test the cerberus client. Mock is used to mock external calls"""
@@ -578,6 +584,26 @@ class TestCerberusClient(unittest.TestCase):
             params={'limit': '1', 'offset': '1'},
             headers=self.client.HEADERS
         )
+
+    @patch("{0}.open".format(builtins_str), new_callable=mock_open, read_data="data")
+    @patch('cerberus.util.request_with_retry')
+    def test_put_file(self, mock_retry, mock_file):
+        """ put_file: Test uploading a file   Especially that the incomming file name and sdb path are handled correctly """
+        c_url=str.join("/", [self.cerberus_url,"v1/secure-file", self.sdb_data["path"]])
+        sdb_path = self.sdb_data["path"]
+        headers=self.client.HEADERS.copy()
+        headers.pop('Content-Type', None)
+
+        filenames = ["./test.txt", "/abs/path/test.txt", "no-ext", "./rel-no-ext", "/abs/path/no-ext", "//start-with-double-slash"]
+        f = filenames[0]
+        for f in filenames:
+            # Should have with self.subTests here, but python2 doesn't support that
+            base_f = basename(f)
+            assert_is_not(base_f, '', msg="Filename not found")
+            mock_retry.return_value.status_code=204
+            mfile = open(f, 'rb')
+            upload = self.client.put_file(str.join("", [sdb_path, base_f]) , mfile)
+            mock_retry.assert_called_with(c_url + base_f, 'post', 3, files={'file-content': (base_f, mfile)}, headers=headers) 
 
 
 ## ---- secrets ----
