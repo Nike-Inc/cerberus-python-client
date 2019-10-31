@@ -232,7 +232,7 @@ client.get_file_metadata('category/sdb/path/to/file.example')
 Uploading a file to Cerberus
 ```python
 ## put_file('SDB Path', 'file name', file handle to file you want to upload)
-client.put_file('category/sdb/path/to/file.example', 'file.example', open('file.example', 'rb'))
+client.put_file('category/sdb/path/to/file.example', open('file.example', 'rb'))
 ```
 For the file you open, please make sure it's opened in binary mode, otherwise the size calculations for how big it is can be off.
 
