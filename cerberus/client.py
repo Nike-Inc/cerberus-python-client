@@ -668,3 +668,28 @@ class CerberusClient(object):
         # unicode stings as the payload.
         combined_key = json.encoder.JSONEncoder().encode(temp_key)
         return combined_key
+
+    def get_metadata(self, sdb_name=None):
+        """
+        (Admin) get metadata for all SDBs or a specific one when sdb_name is set
+        Keyword arguments:
+            sdb_name (string) -- The name of the SDB to query for
+        """
+        metadata_list = []
+
+        metadata_resp = self._get_metadata_resp(sdb_name=sdb_name)
+        metadata_list.extend(metadata_resp.get('safe_deposit_box_metadata'))
+        while metadata_resp['has_next']:
+            metadata_resp = self._get_metadata_resp(offset=metadata_resp['next_offset'], sdb_name=sdb_name)
+            metadata_list.extend(metadata_resp.get('safe_deposit_box_metadata'))
+
+        return metadata_list
+
+    def _get_metadata_resp(self, offset=0, sdb_name=None):
+        params = {'offset': offset}
+        if sdb_name is not None:
+            params['sdbName'] = sdb_name
+        metadata_resp = get_with_retry(str.join('', [self.cerberus_url, '/v1/metadata']),
+                                       params=params, headers=self.HEADERS)
+        throw_if_bad_response(metadata_resp)
+        return metadata_resp.json()
