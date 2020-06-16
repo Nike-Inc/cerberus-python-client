@@ -853,3 +853,67 @@ class TestCerberusClient(unittest.TestCase):
             self.cerberus_url, token="overridetoken"
         )
         assert_equals(anotherClient.get_token(), "overridetoken")
+
+    @patch('requests.get')
+    def test_get_sdb_metadata(self, mock_get):
+        """
+        Testing that get_metadata returns the correct SDB metadata
+        """
+        metadata_1 = {
+            'has_next': True,
+            'next_offset': 1,
+            'limit': 1,
+            'offset': 0,
+            'sdb_count_in_result': 1,
+            'total_sdbcount': 2,
+            'safe_deposit_box_metadata': [
+                {
+                    'name': 'sdb 1',
+                    'path': 'app/sdb-1/',
+                    'category': 'Applications',
+                    'owner': 'very large group',
+                    'user_group_permissions': {},
+                    'iam_role_permissions':
+                        {
+                            'arn:aws:iam::1234567:role/role': 'write'
+                        },
+                    'data': None
+                }
+            ]
+        }
+
+        metadata_2 = {
+            'has_next': False,
+            'next_offset': 0,
+            'limit': 1,
+            'offset': 1,
+            'sdb_count_in_result': 1,
+            'total_sdbcount': 2,
+            'safe_deposit_box_metadata': [
+                {
+                    'name': 'sdb 2',
+                    'path': 'app/sdb-2/',
+                    'category': 'Applications',
+                    'owner': 'very large group',
+                    'user_group_permissions': {},
+                    'iam_role_permissions':
+                        {
+                            'arn:aws:iam::1234567:role/role': 'write'
+                        },
+                    'data': None
+                }
+            ]
+        }
+
+        mock_get.side_effect = [self._mock_response(content=json.dumps(metadata_1)), self._mock_response(content=json.dumps(metadata_2))]
+        metadata = self.client.get_metadata()
+
+        # confirm the sdb names match
+        assert_equals('sdb 1', metadata[0]['name'])
+        assert_equals('sdb 2', metadata[1]['name'])
+        assert_in('X-Cerberus-Client', self.client.HEADERS)
+        mock_get.assert_called_with(
+            self.cerberus_url + '/v1/metadata',
+            params={'offset': 1},
+            headers=self.client.HEADERS
+        )
