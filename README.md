@@ -312,7 +312,6 @@ environmental variables, to avoid the extra Cerberus runtime latency.
 
 Get secrets from Cerberus using IAM Role (execution role) ARN. It's a good idea to cache the secrets since AWS reuses Lambda instances.
 ```python
-import os
 from cerberus.client import CerberusClient
 secrets = None
 def lambda_handler(event, context):
@@ -321,6 +320,23 @@ def lambda_handler(event, context):
         secrets = client.get_secrets_data("app/yourapplication/dbproperties")['dbpasswd']
 ```
 
+### Admin
+
+A Cerberus admin (not to be confused with SDB owners) may perform additional tasks such as getting SDB metadata. 
+
+#### Metadata
+
+Get all SDB metadata from Cerberus.
+```python
+from cerberus.client import CerberusClient
+metadata = CerberusClient('https://my.cerberus.url').get_metadata()
+```
+
+Get SDB metadata of a specific SDB from Cerberus.
+```python
+from cerberus.client import CerberusClient
+metadata = CerberusClient('https://my.cerberus.url').get_metadata(sdb_name='my sdb')
+```
 
 ## Running Tests
 

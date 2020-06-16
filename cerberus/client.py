@@ -671,7 +671,7 @@ class CerberusClient(object):
 
     def get_metadata(self, sdb_name=None):
         """
-        (Admin) get metadata for all SDBs or a specific one when sdb_name is set
+        (Limited to Cerberus admin) get metadata for all SDBs or a specific one when sdb_name is set
         Keyword arguments:
             sdb_name (string) -- The name of the SDB to query for
         """
