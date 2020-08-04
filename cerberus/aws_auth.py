@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
+    CN_REGIONS = {"cn-north-1", "cn-northwest-1"}
     HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
 
     def __init__(self, cerberus_url, region, aws_session=None, verbose=None):
@@ -51,7 +52,7 @@ class AWSAuth(object):
         # hardcode get-caller-identity request
         data = OrderedDict((('Action', 'GetCallerIdentity'), ('Version', '2011-06-15')))
         url = 'https://sts.{}.amazonaws.com'.format(self.region)
-        if self.region == "cn-north-1" or self.region == "cn-northwest-1":
+        if self.region in self.CN_REGIONS:
             url += ".cn"
         request_object = awsrequest.AWSRequest(method='POST', url=url, data=data)
 
