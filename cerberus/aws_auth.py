@@ -50,7 +50,9 @@ class AWSAuth(object):
 
         # hardcode get-caller-identity request
         data = OrderedDict((('Action', 'GetCallerIdentity'), ('Version', '2011-06-15')))
-        url = 'https://sts.{}.amazonaws.com/'.format(self.region)
+        url = 'https://sts.{}.amazonaws.com'.format(self.region)
+        if self.region == "cn-north-1" or self.region == "cn-northwest-1":
+            url += ".cn"
         request_object = awsrequest.AWSRequest(method='POST', url=url, data=data)
 
         signer = auth.SigV4Auth(readonly_credentials, 'sts', self.region)
