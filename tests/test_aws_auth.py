@@ -102,7 +102,6 @@ class TestAWSAuth(unittest.TestCase):
     @patch('botocore.auth.SigV4Auth')
     def test_set_sts_us_west_2(self, _mock_auth, mock_awsrequest):
         mock_awsrequest.return_value = Mock()
-
         auth_client = AWSAuth("https://cerberus.fake.com", region='us-west-2')
 
         mock_awsrequest.reset_mock()
