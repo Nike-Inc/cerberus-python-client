@@ -19,7 +19,8 @@ import unittest
 
 import requests
 import botocore
-from mock import patch, ANY
+
+from mock import patch, ANY, Mock
 from .matcher import AnyDictWithKey
 
 from cerberus.aws_auth import AWSAuth
@@ -96,3 +97,24 @@ class TestAWSAuth(unittest.TestCase):
         mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('X-Amz-Security-Token'))
         mock_post.assert_called_once_with(ANY, headers=AnyDictWithKey('Authorization'))
         self.assertEqual(token, response_body['client_token'])
+
+    @patch('botocore.awsrequest.AWSRequest')
+    @patch('botocore.auth.SigV4Auth')
+    def test_set_sts_us_west_2(self, _mock_auth, mock_awsrequest):
+        mock_awsrequest.return_value = Mock()
+
+        auth_client = AWSAuth("https://cerberus.fake.com", region='us-west-2')
+
+        mock_awsrequest.reset_mock()
+        auth_client._get_v4_signed_headers()
+        mock_awsrequest.assert_called_once_with(method=ANY, url="https://sts.us-west-2.amazonaws.com", data=ANY)
+
+    @patch('botocore.awsrequest.AWSRequest')
+    @patch('botocore.auth.SigV4Auth')
+    def test_set_sts_cn_north_1(self, _mock_auth, mock_awsrequest):
+        mock_awsrequest.return_value = Mock()
+        auth_client = AWSAuth("https://cerberus.fake.com", region='cn-north-1')
+
+        mock_awsrequest.reset_mock()
+        auth_client._get_v4_signed_headers()
+        mock_awsrequest.assert_called_once_with(method=ANY, url="https://sts.cn-north-1.amazonaws.com.cn", data=ANY)
