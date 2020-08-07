@@ -100,20 +100,25 @@ class TestAWSAuth(unittest.TestCase):
 
     @patch('botocore.awsrequest.AWSRequest')
     @patch('botocore.auth.SigV4Auth')
-    def test_set_sts_us_west_2(self, _mock_auth, mock_awsrequest):
+    @patch('botocore.session.Session.get_credentials')
+    def test_set_sts_us_west_2(self, mock_get_credentials, _mock_auth, mock_awsrequest):
         mock_awsrequest.return_value = Mock()
-        auth_client = AWSAuth("https://cerberus.fake.com", region='us-west-2')
+        mock_get_credentials.return_value = botocore.credentials.Credentials('testid', 'testkey', 'testtoken')
 
+        auth_client = AWSAuth("https://cerberus.fake.com", region='us-west-2')
         mock_awsrequest.reset_mock()
         auth_client._get_v4_signed_headers()
         mock_awsrequest.assert_called_once_with(method=ANY, url="https://sts.us-west-2.amazonaws.com", data=ANY)
 
     @patch('botocore.awsrequest.AWSRequest')
     @patch('botocore.auth.SigV4Auth')
-    def test_set_sts_cn_north_1(self, _mock_auth, mock_awsrequest):
-        mock_awsrequest.return_value = Mock()
+    @patch('botocore.session.Session.get_credentials')
+    def test_set_sts_cn_north_1(self, mock_get_credentials, _mock_auth, mock_awsrequest):
+
         auth_client = AWSAuth("https://cerberus.fake.com", region='cn-north-1')
 
+        mock_get_credentials.return_value = botocore.credentials.Credentials('testid', 'testkey', 'testtoken')
+        mock_awsrequest.return_value = Mock()
         mock_awsrequest.reset_mock()
         auth_client._get_v4_signed_headers()
         mock_awsrequest.assert_called_once_with(method=ANY, url="https://sts.cn-north-1.amazonaws.com.cn", data=ANY)
