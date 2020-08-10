@@ -370,15 +370,12 @@ client = CerberusClient('https://my.cerberus.url', token='mytoken')
 Refer to the "local development" section at [Quick Start](http://engineering.nike.com/cerberus/docs/user-guide/quick-start) if you're having trouble getting a token.
 
 
-## Maintenance
-This project is maintained by Ann Wallace `ann.wallace@nike.com`
-
 ## License
 
 Cerberus Management Service is released under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
-[travis]:https://travis-ci.org/Nike-Inc/cerberus-management-service
-[travis img]:https://api.travis-ci.org/Nike-Inc/cerberus-management-service.svg?branch=master
+[travis]:https://travis-ci.org/Nike-Inc/cerberus-python-client
+[travis img]:https://api.travis-ci.org/Nike-Inc/cerberus-python-client.svg?branch=master
 
 [license]:LICENSE.txt
 [license img]:https://img.shields.io/badge/License-Apache%202-blue.svg
