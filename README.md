@@ -56,6 +56,11 @@ IAM Role Authentication(Local, EC2, ECS, Lambda, etc.):
 ```python
 client = CerberusClient('https://my.cerberus.url')
 ```
+Note: If authenticating from the China AWS partition you must specify the AWS region you are using in China.
+```python
+client = CerberusClient('https://my.cerberus.url', region="cn-northwest-1")
+```
+If no region is specified us-west-2 is assumed and STS authentication using China IAM roles will fail. 
 
 User Authentication:
 ```python
