@@ -48,7 +48,7 @@ python setup.py install
 from cerberus.client import CerberusClient
 ```
 
-#### Instantiate the Client
+#### Instantiate the Client in AWS Global
 
 
 IAM Role Authentication(Local, EC2, ECS, Lambda, etc.):
@@ -78,6 +78,14 @@ cerberus_session = boto3.session.Session(
 
 client = CerberusClient(cerberus_url='https://my.cerberus.url', aws_session=cerberus_session)
 
+```
+
+#### Instantiate the Client in AWS China
+For authentication to AWS China, region needs to be added as a parameter to `CerberusClient`.
+
+For example, for IAM Role Authentication:
+```python
+client = CerberusClient('https://my.cerberus.url', region=aws_cn_region)
 ```
 
 #### Activate Log Messages
