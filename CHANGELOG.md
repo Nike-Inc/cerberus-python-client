@@ -5,6 +5,14 @@ Date format is Day-Month-Year
 
 ### Added
 
+###### 10-08-2020
+- Version 2.5.0
+  - Allows for the use of AWS China Region STS authentication
+
+###### 15-06-2020
+- Version 2.4.0
+  - Add SDB metadata support
+  
 ###### 30-10-2019
 - Version 2.3.2
   - Added unit tests for file upload
