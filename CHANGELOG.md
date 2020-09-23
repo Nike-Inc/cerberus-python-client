@@ -12,6 +12,10 @@ Date format is Day-Month-Year
 ###### 15-06-2020
 - Version 2.4.0
   - Add SDB metadata support
+
+###### 19-02-2019
+- Version 2.3.3
+  - Update endpoint for get SDB
   
 ###### 30-10-2019
 - Version 2.3.2
