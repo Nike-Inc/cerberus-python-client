@@ -1,0 +1,51 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Build and Release
+
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v2
+
+jobs:
+  Build-And-Release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-compute-engine
+          pip install twine
+          pip install -r requirements-dev.txt
+          python setup.py install
+      - name: Run Tests
+        run: |
+          nosetests --verbosity=2 tests/
+      - name: Prepare for release to PyPi
+        run: |
+          python setup.py sdist
+          python setup.py bdist_wheel --universal
+      - name: Publish a Python distribution to PyPI
+        run: |
+          twine upload -u ${{secrets.PYPI_USERNAME}} -p ${{secrets.PYPI_PASSWORD}}  dist/*
+      - name: Slack notification when release fails
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2.1.0
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: cerberus-alerts
+          SLACK_MESSAGE: 'Cerberus release workflow has failed :build-failed:'
+          SLACK_ICON: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+          SLACK_TITLE: Cerberus Build Failure Notification
+          SLACK_USERNAME: GitHub Actions
