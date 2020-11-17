@@ -1,7 +1,8 @@
 # Cerberus Python Client
 
-[![][travis img]][travis]
+![Python package](https://github.com/Nike-Inc/cerberus-python-client/workflows/Build/badge.svg)
 [![][license img]][license]
+[![codecov](https://codecov.io/gh/Nike-Inc/cerberus-python-client/branch/master/graph/badge.svg)](https://codecov.io/gh/Nike-Inc/cerberus-python-client)
 [![PyPI version](https://badge.fury.io/py/cerberus-python-client.svg)](https://badge.fury.io/py/cerberus-python-client)
 
 This is a Python based client library for communicating with Cerberus via HTTPS and enables authentication schemes specific
@@ -379,8 +380,7 @@ Refer to the "local development" section at [Quick Start](http://engineering.nik
 
 Cerberus Management Service is released under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
-[travis]:https://travis-ci.org/Nike-Inc/cerberus-python-client
-[travis img]:https://api.travis-ci.org/Nike-Inc/cerberus-python-client.svg?branch=master
+[gh actions img]:https://api.travis-ci.org/Nike-Inc/cerberus-python-client.svg?branch=master
 
 [license]:LICENSE.txt
 [license img]:https://img.shields.io/badge/License-Apache%202-blue.svg
