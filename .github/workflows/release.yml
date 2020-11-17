@@ -27,7 +27,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install google-compute-engine
           pip install twine
-          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           python setup.py install
       - name: Run Tests
         run: |
