@@ -48,11 +48,11 @@ class CerberusClient(object):
         a botocore.session.Session object, the Cerberus client will sign the request using the session provided
         instead of the default session.
 
-        verbose (default True) controls if the cerberus library will output some debuging statements to the
+        verbose (default True) controls if the cerberus library will output some debugging statements to the
         console (sys.stderr).
         
         """
-        self.cerberus_url = cerberus_url
+        self.cerberus_url = self._remove_trailing_slash(cerberus_url)
         self.username = username or ""
         self.password = password or ""
         self.region = region
@@ -73,6 +73,13 @@ class CerberusClient(object):
         """ if a string doesn't end in a '/' add one """
         if not str.endswith(string, '/'):
             return str.join('', [string, '/'])
+        return str(string)
+
+    # noinspection PyMethodMayBeStatic
+    def _remove_trailing_slash(self, string=None):
+        """ if a string ends in a '/' remove it """
+        if str.endswith(string, '/'):
+            return str(string[:-1])
         return str(string)
 
     def _set_token(self):
