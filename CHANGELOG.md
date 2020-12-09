@@ -5,6 +5,10 @@ Date format is Day-Month-Year
 
 ### Added
 
+###### 09-12-2020
+- Version 2.5.2
+  - Bugfix trailing slashes on client initialization
+
 ###### 10-08-2020
 - Version 2.5.0
   - Allows for the use of AWS China Region STS authentication
