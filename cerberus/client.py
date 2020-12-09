@@ -69,7 +69,7 @@ class CerberusClient(object):
         self.HEADERS['X-Cerberus-Client'] = 'CerberusPythonClient/' + CLIENT_VERSION
 
     # noinspection PyMethodMayBeStatic
-    def _add_slash(self, string=None):
+    def _add_trailing_slash(self, string=None):
         """ if a string doesn't end in a '/' add one """
         if not str.endswith(string, '/'):
             return str.join('', [string, '/'])
@@ -233,7 +233,7 @@ class CerberusClient(object):
         json_resp = self.get_sdbs()
 
         # Deal with the supplied path possibly missing an ending slash
-        path = self._add_slash(sdb_path)
+        path = self._add_trailing_slash(sdb_path)
 
         for r in json_resp:
             if r['path'] == path:
@@ -462,7 +462,7 @@ class CerberusClient(object):
 
         # Because of the addition of versionId and the way URLs are constructed, secure_data_path should
         #  always end in a '/'.
-        secure_data_path = self._add_slash(secure_data_path)
+        secure_data_path = self._add_trailing_slash(secure_data_path)
         secret_resp = get_with_retry(self.cerberus_url + '/v1/secure-files/' + secure_data_path,
                                      params=payload, headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
@@ -620,7 +620,7 @@ class CerberusClient(object):
 
         # Because of the addition of versionId and the way URLs are constructed, secure_data_path should
         #  always end in a '/'.
-        secure_data_path = self._add_slash(secure_data_path)
+        secure_data_path = self._add_trailing_slash(secure_data_path)
         secret_resp = get_with_retry(self.cerberus_url + '/v1/secret/' + secure_data_path + '?list=true',
                                      headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
