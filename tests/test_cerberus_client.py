@@ -455,30 +455,37 @@ class TestCerberusClient(unittest.TestCase):
             'offset': 0,
             'file_count_in_result': 3,
             'total_file_count': 3,
-            'secure_file_summaries': [{'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-                                       'path': 'studio54/test.py',
-                                       'size_in_bytes': 1323,
-                                       'name': 'test.py',
-                                       'created_by': 'tester@studio54.com',
-                                       'created_ts': '1974-11-17T00:02:30Z',
-                                       'last_updated_by': 'tester@studio54.com',
-                                       'last_updated_ts': '1974-11-17T00:02:30Z'},
-                                      {'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-                                       'path': 'studio54/test.gif',
-                                       'size_in_bytes': 686,
-                                       'name': 'test.gif',
-                                       'created_by': 'tester@studio54.com',
-                                       'created_ts': '1974-11-17T00:02:30Z',
-                                       'last_updated_by': 'tester@studio54.com',
-                                       'last_updated_ts': '1974-11-17T00:02:30Z'},
-                                      {'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-                                       'path': 'studio54/5621.gif',
-                                       'size_in_bytes': 686,
-                                       'name': '5621.gif',
-                                       'created_by': 'tester@studio54.com',
-                                       'created_ts': '1974-11-17T00:02:30Z',
-                                       'last_updated_by': 'tester@studio54.com',
-                                       'last_updated_ts': '1974-11-17T00:02:30Z'}]
+            'secure_file_summaries': [
+                {
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'studio54/test.py',
+                    'size_in_bytes': 1323,
+                    'name': 'test.py',
+                    'created_by': 'tester@studio54.com',
+                    'created_ts': '1974-11-17T00:02:30Z',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z'},
+                {
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'studio54/test.gif',
+                    'size_in_bytes': 686,
+                    'name': 'test.gif',
+                    'created_by': 'tester@studio54.com',
+                    'created_ts': '1974-11-17T00:02:30Z',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z'
+                },
+                {
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'studio54/5621.gif',
+                    'size_in_bytes': 686,
+                    'name': '5621.gif',
+                    'created_by': 'tester@studio54.com',
+                    'created_ts': '1974-11-17T00:02:30Z',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z'
+                }
+            ]
         }
 
         payload = {'limit': '100', 'offset': '0'}
@@ -558,14 +565,18 @@ class TestCerberusClient(unittest.TestCase):
             'offset': 1,
             'version_count_in_result': 1,
             'total_version_count': 2,
-            'secure_data_version_summaries': [{'id': '00000000-0000-0000-0000-000000012345',
-                                               'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-                                               'path': 'fake/path',
-                                               'action': 'UPDATE',
-                                               'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-                                               'version_created_ts': '1978-11-27T23:08:14.027Z',
-                                               'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-                                               'action_ts': '1978-11-27T23:08:14.027Z'}]
+            'secure_data_version_summaries': [
+                {
+                    'id': '00000000-0000-0000-0000-000000012345',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                }
+            ]
         }
 
         mock_resp = self._mock_response(content=json.dumps(version_data))
@@ -690,14 +701,18 @@ class TestCerberusClient(unittest.TestCase):
             'offset': 1,
             'version_count_in_result': 1,
             'total_version_count': 2,
-            'secure_data_version_summaries': [{'id': '00000000-0000-0000-0000-000000012345',
-                                               'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-                                               'path': 'fake/path',
-                                               'action': 'UPDATE',
-                                               'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-                                               'version_created_ts': '1978-11-27T23:08:14.027Z',
-                                               'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-                                               'action_ts': '1978-11-27T23:08:14.027Z'}]
+            'secure_data_version_summaries': [
+                {
+                    'id': '00000000-0000-0000-0000-000000012345',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                }
+            ]
         }
 
         mock_resp = self._mock_response(content=json.dumps(version_data))
