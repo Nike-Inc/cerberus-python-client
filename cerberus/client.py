@@ -20,8 +20,9 @@ import requests
 from .aws_auth import AWSAuth
 from .user_auth import UserAuth
 from . import CerberusClientException, CLIENT_VERSION
-from .util import throw_if_bad_response, get_with_retry, post_with_retry, put_with_retry, delete_with_retry, \
+from .network_util import throw_if_bad_response, get_with_retry, post_with_retry, put_with_retry, delete_with_retry, \
     head_with_retry
+from .url_util import ensure_single_trailing_slash, ensure_no_trailing_slash
 
 import ast
 import json
@@ -52,7 +53,7 @@ class CerberusClient(object):
         console (sys.stderr).
         
         """
-        self.cerberus_url = self._remove_trailing_slash(cerberus_url)
+        self.cerberus_url = ensure_no_trailing_slash(cerberus_url)
         self.username = username or ""
         self.password = password or ""
         self.region = region
@@ -67,20 +68,6 @@ class CerberusClient(object):
 
         self.HEADERS['X-Cerberus-Token'] = self.token
         self.HEADERS['X-Cerberus-Client'] = 'CerberusPythonClient/' + CLIENT_VERSION
-
-    # noinspection PyMethodMayBeStatic
-    def _add_trailing_slash(self, string=None):
-        """ if a string doesn't end in a '/' add one """
-        if not str.endswith(string, '/'):
-            return str.join('', [string, '/'])
-        return str(string)
-
-    # noinspection PyMethodMayBeStatic
-    def _remove_trailing_slash(self, string=None):
-        """ if a string ends in a '/' remove it """
-        if str.endswith(string, '/'):
-            return str(string[:-1])
-        return str(string)
 
     def _set_token(self):
         """Set the Cerberus token based on auth type"""
@@ -240,7 +227,7 @@ class CerberusClient(object):
         json_resp = self.get_sdbs()
 
         # Deal with the supplied path possibly missing an ending slash
-        path = self._add_trailing_slash(sdb_path)
+        path = ensure_single_trailing_slash(sdb_path)
 
         for r in json_resp:
             if r['path'] == path:
@@ -469,7 +456,7 @@ class CerberusClient(object):
 
         # Because of the addition of versionId and the way URLs are constructed, secure_data_path should
         #  always end in a '/'.
-        secure_data_path = self._add_trailing_slash(secure_data_path)
+        secure_data_path = ensure_single_trailing_slash(secure_data_path)
         secret_resp = get_with_retry(self.cerberus_url + '/v1/secure-files/' + secure_data_path,
                                      params=payload, headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
@@ -627,7 +614,7 @@ class CerberusClient(object):
 
         # Because of the addition of versionId and the way URLs are constructed, secure_data_path should
         #  always end in a '/'.
-        secure_data_path = self._add_trailing_slash(secure_data_path)
+        secure_data_path = ensure_single_trailing_slash(secure_data_path)
         secret_resp = get_with_retry(self.cerberus_url + '/v1/secret/' + secure_data_path + '?list=true',
                                      headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
