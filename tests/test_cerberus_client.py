@@ -473,7 +473,8 @@ class TestCerberusClient(unittest.TestCase):
                     'created_by': 'tester@studio54.com',
                     'created_ts': '1974-11-17T00:02:30Z',
                     'last_updated_by': 'tester@studio54.com',
-                    'last_updated_ts': '1974-11-17T00:02:30Z'},
+                    'last_updated_ts': '1974-11-17T00:02:30Z'
+                },
                 {
                     'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
                     'path': 'studio54/test.gif',
