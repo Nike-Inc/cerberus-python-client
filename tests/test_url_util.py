@@ -1,5 +1,5 @@
 """
-Copyright 2018-present Nike, Inc.
+Copyright 2020-present Nike, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 You may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class TestEnsureTrailingSlash(unittest.TestCase):
 
 
 class TestEnsureNoTrailingSlash(unittest.TestCase):
-    """unit tests for url_util.ensure_trailing_slash"""
+    """unit tests for url_util.ensure_no_trailing_slash"""
 
     @staticmethod
     def test_no_trailing_slash():

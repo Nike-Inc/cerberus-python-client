@@ -60,25 +60,27 @@ class TestCerberusClient(unittest.TestCase):
             "name": "Disco Events",
             "description": "Studio 54",
             "path": "app/disco-events/",
-            'iam_principal_permissions':
-                [{'created_by': 'tester@studio54.com',
-                  'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-                  'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
-                  'last_updated_by': 'tester@studio54.com',
-                  'last_updated_ts': '1974-11-17T00:02:30Z',
-                  'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
-                 {'created_by': 'tester@studio54.com',
-                  'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
-                  'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
-                  'last_updated_by': 'tester@studio54.com',
-                  'last_updated_ts': '1974-11-17T00:02:30Z',
-                  'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
-                 {'created_by': 'tester@studio54.com',
-                  'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
-                  'id': '27731199-7055-3c4b-3883-9f01f17bc034',
-                  'last_updated_by': 'tester@studio54.com',
-                  'last_updated_ts': '1974-11-17T00:02:30Z',
-                  'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'}],
+            'iam_principal_permissions': [
+                {'created_by': 'tester@studio54.com',
+                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                 'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
+                 'last_updated_by': 'tester@studio54.com',
+                 'last_updated_ts': '1974-11-17T00:02:30Z',
+                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
+                {'created_by': 'tester@studio54.com',
+                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
+                 'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
+                 'last_updated_by': 'tester@studio54.com',
+                 'last_updated_ts': '1974-11-17T00:02:30Z',
+                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
+                {'created_by': 'tester@studio54.com',
+                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
+                 'id': '27731199-7055-3c4b-3883-9f01f17bc034',
+                 'last_updated_by': 'tester@studio54.com',
+                 'last_updated_ts': '1974-11-17T00:02:30Z',
+                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                 }
+            ],
         }
         self.file_data = {
             'Date': 'Sun, 17 November 1974 00:02:30 GMT',
@@ -360,25 +362,32 @@ class TestCerberusClient(unittest.TestCase):
             'category_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
             'created_by': 'tester@studio54.com',
             'created_ts': '1978-11-27T23:08:14.027Z',
-            'iam_principal_permissions': [{
-                'created_by': 'tester@studio54.com',
-                'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-                'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
-                'last_updated_by': 'tester@studio54.com',
-                'last_updated_ts': '1974-11-17T00:02:30Z',
-                'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
-                {'created_by': 'tester@studio54.com',
-                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
-                 'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
-                 'last_updated_by': 'tester@studio54.com',
-                 'last_updated_ts': '1974-11-17T00:02:30Z',
-                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
-                {'created_by': 'tester@studio54.com',
-                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
-                 'id': '27731199-7055-3c4b-3883-9f01f17bc034',
-                 'last_updated_by': 'tester@studio54.com',
-                 'last_updated_ts': '1974-11-17T00:02:30Z',
-                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'}],
+            'iam_principal_permissions': [
+                {
+                    'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                },
+                {
+                    'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
+                    'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                },
+                {
+                    'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
+                    'id': '27731199-7055-3c4b-3883-9f01f17bc034',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                }
+            ],
             'owner': 'Admin.Studio.54',
             'user_group_permissions': []
         }
