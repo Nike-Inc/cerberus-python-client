@@ -18,13 +18,12 @@ import unittest
 
 import requests
 
-from cerberus.util import throw_if_bad_response
+from cerberus.network_util import throw_if_bad_response
 from cerberus import CerberusClientException
 
 
-class TestUtil(unittest.TestCase):
-    """Mock unit test for util"""
-
+class TestNetworkUtil(unittest.TestCase):
+    """Mock unit test for network_util"""
     @staticmethod
     def _mock_response(status=200, reason=None, content=''):
         mock_resp = requests.Response()
@@ -40,6 +39,6 @@ class TestUtil(unittest.TestCase):
         self.assertRaises(CerberusClientException, throw_if_bad_response, resp)
 
     def test_json(self):
-        error_json = { 'error_id': '1'}
+        error_json = {'error_id': '1'}
         resp = self._mock_response(status=403, content=json.dumps(error_json))
         self.assertRaises(CerberusClientException, throw_if_bad_response, resp)

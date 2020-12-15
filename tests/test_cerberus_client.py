@@ -35,8 +35,10 @@ if int(platform.python_version_tuple()[0]) < 3:
 else:
     builtins_str = "builtins"
 
+
 class TestCerberusClient(unittest.TestCase):
     """Class to test the cerberus client. Mock is used to mock external calls"""
+
     @patch('cerberus.client.CerberusClient._set_token', return_value='1234-asdf-1234hy-qwer6')
     def setUp(self, *args):
         self.cerberus_url = "https://cerberus.fake.com"
@@ -58,25 +60,27 @@ class TestCerberusClient(unittest.TestCase):
             "name": "Disco Events",
             "description": "Studio 54",
             "path": "app/disco-events/",
-            'iam_principal_permissions':
-                [{'created_by': 'tester@studio54.com',
-                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-                    'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
-                    'last_updated_by': 'tester@studio54.com',
-                    'last_updated_ts': '1974-11-17T00:02:30Z',
-                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
+            'iam_principal_permissions': [
                 {'created_by': 'tester@studio54.com',
-                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
-                    'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
-                    'last_updated_by': 'tester@studio54.com',
-                    'last_updated_ts': '1974-11-17T00:02:30Z',
-                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
+                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                 'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
+                 'last_updated_by': 'tester@studio54.com',
+                 'last_updated_ts': '1974-11-17T00:02:30Z',
+                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
                 {'created_by': 'tester@studio54.com',
-                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
-                    'id': '27731199-7055-3c4b-3883-9f01f17bc034',
-                    'last_updated_by': 'tester@studio54.com',
-                    'last_updated_ts': '1974-11-17T00:02:30Z',
-                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'}],
+                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
+                 'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
+                 'last_updated_by': 'tester@studio54.com',
+                 'last_updated_ts': '1974-11-17T00:02:30Z',
+                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
+                {'created_by': 'tester@studio54.com',
+                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
+                 'id': '27731199-7055-3c4b-3883-9f01f17bc034',
+                 'last_updated_by': 'tester@studio54.com',
+                 'last_updated_ts': '1974-11-17T00:02:30Z',
+                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                 }
+            ],
         }
         self.file_data = {
             'Date': 'Sun, 17 November 1974 00:02:30 GMT',
@@ -147,7 +151,6 @@ class TestCerberusClient(unittest.TestCase):
             headers=self.client.HEADERS
         )
 
-
     sdb_data = [
         {
             "id": "5f0-99-414-bc-e5909c",
@@ -183,7 +186,6 @@ class TestCerberusClient(unittest.TestCase):
             self.cerberus_url + '/v2/safe-deposit-box',
             headers=self.client.HEADERS
         )
-
 
     @patch('requests.get')
     def test_get_sdb_id(self, mock_get):
@@ -360,25 +362,32 @@ class TestCerberusClient(unittest.TestCase):
             'category_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
             'created_by': 'tester@studio54.com',
             'created_ts': '1978-11-27T23:08:14.027Z',
-            'iam_principal_permissions': [{
-                'created_by': 'tester@studio54.com',
-                'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-                'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
-                'last_updated_by': 'tester@studio54.com',
-                'last_updated_ts': '1974-11-17T00:02:30Z',
-                'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
-                {'created_by': 'tester@studio54.com',
-                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
-                 'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
-                 'last_updated_by': 'tester@studio54.com',
-                 'last_updated_ts': '1974-11-17T00:02:30Z',
-                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'},
-                {'created_by': 'tester@studio54.com',
-                 'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
-                 'id': '27731199-7055-3c4b-3883-9f01f17bc034',
-                 'last_updated_by': 'tester@studio54.com',
-                 'last_updated_ts': '1974-11-17T00:02:30Z',
-                 'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'}],
+            'iam_principal_permissions': [
+                {
+                    'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                },
+                {
+                    'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
+                    'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                },
+                {
+                    'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
+                    'id': '27731199-7055-3c4b-3883-9f01f17bc034',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                }
+            ],
             'owner': 'Admin.Studio.54',
             'user_group_permissions': []
         }
@@ -405,16 +414,18 @@ class TestCerberusClient(unittest.TestCase):
                     'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
                 },
             ]
-            )
+        )
 
         assert_equals(create, sdb_data)
         assert_in('X-Cerberus-Client', self.client.HEADERS)
-        #mock_get.assert_called_once_with(self.cerberus_url + '/v2/safe-deposit-box')
-        #mock_get.assert_called_with(
-        #    self.cerberus_url + '/v2/safe-deposit-box',
-        #    data={"owner": "Admin.Studio.54", "iam_principal_permissions": [{"iam_principal_arn": "arn:aws:iam::292800423415:role/studio54-dancefloor", "role_id": "8609a0c3-31e5-49ab-914d-c70c35da9478"}, {"iam_principal_arn": "arn:aws:iam::292800423415:role/studio54-bar", "role_id": "8609a0c3-31e5-49ab-914d-c70c35da9478"}, {"iam_principal_arn": "arn:aws:iam::292800423415:role/studio54-office", "role_id": "8609a0c3-31e5-49ab-914d-c70c35da9478"}], "description": "Studio 54", "category_id": "244cfc0d-4beb-8189-5056-194f18ead6f4", "name": "Disco Events"},
-        #    headers=self.client.HEADERS
-        #)
+        # mock_get.assert_called_once_with(self.cerberus_url + '/v2/safe-deposit-box') mock_get.assert_called_with(
+        # self.cerberus_url + '/v2/safe-deposit-box', data={"owner": "Admin.Studio.54", "iam_principal_permissions":
+        # [{"iam_principal_arn": "arn:aws:iam::292800423415:role/studio54-dancefloor", "role_id":
+        # "8609a0c3-31e5-49ab-914d-c70c35da9478"}, {"iam_principal_arn":
+        # "arn:aws:iam::292800423415:role/studio54-bar", "role_id": "8609a0c3-31e5-49ab-914d-c70c35da9478"},
+        # {"iam_principal_arn": "arn:aws:iam::292800423415:role/studio54-office", "role_id":
+        # "8609a0c3-31e5-49ab-914d-c70c35da9478"}], "description": "Studio 54", "category_id":
+        # "244cfc0d-4beb-8189-5056-194f18ead6f4", "name": "Disco Events"}, headers=self.client.HEADERS )
 
     @patch('requests.get')
     def test_get_sdb_keys(self, mock_get):
@@ -442,7 +453,7 @@ class TestCerberusClient(unittest.TestCase):
             headers=self.client.HEADERS
         )
 
-## ---- files ----
+    # ---- files ----
     @patch('requests.get')
     def test_list_files(self, mock_get):
         """ Testing that list_files returns the correct files """
@@ -453,30 +464,38 @@ class TestCerberusClient(unittest.TestCase):
             'offset': 0,
             'file_count_in_result': 3,
             'total_file_count': 3,
-            'secure_file_summaries': [{'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-                'path': 'studio54/test.py',
-                'size_in_bytes': 1323,
-                'name': 'test.py',
-                'created_by': 'tester@studio54.com',
-                'created_ts': '1974-11-17T00:02:30Z',
-                'last_updated_by': 'tester@studio54.com',
-                'last_updated_ts': '1974-11-17T00:02:30Z'},
-                {'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-                'path': 'studio54/test.gif',
-                'size_in_bytes': 686,
-                'name': 'test.gif',
-                'created_by': 'tester@studio54.com',
-                'created_ts': '1974-11-17T00:02:30Z',
-                'last_updated_by': 'tester@studio54.com',
-                'last_updated_ts': '1974-11-17T00:02:30Z'},
-                {'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-                'path': 'studio54/5621.gif',
-                'size_in_bytes': 686,
-                'name': '5621.gif',
-                'created_by': 'tester@studio54.com',
-                'created_ts': '1974-11-17T00:02:30Z',
-                'last_updated_by': 'tester@studio54.com',
-                'last_updated_ts': '1974-11-17T00:02:30Z'}]
+            'secure_file_summaries': [
+                {
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'studio54/test.py',
+                    'size_in_bytes': 1323,
+                    'name': 'test.py',
+                    'created_by': 'tester@studio54.com',
+                    'created_ts': '1974-11-17T00:02:30Z',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z'
+                },
+                {
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'studio54/test.gif',
+                    'size_in_bytes': 686,
+                    'name': 'test.gif',
+                    'created_by': 'tester@studio54.com',
+                    'created_ts': '1974-11-17T00:02:30Z',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z'
+                },
+                {
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'studio54/5621.gif',
+                    'size_in_bytes': 686,
+                    'name': '5621.gif',
+                    'created_by': 'tester@studio54.com',
+                    'created_ts': '1974-11-17T00:02:30Z',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z'
+                }
+            ]
         }
 
         payload = {'limit': '100', 'offset': '0'}
@@ -491,23 +510,22 @@ class TestCerberusClient(unittest.TestCase):
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
             self.cerberus_url + '/v1/secure-files/fake/path/',
-            params=payload,headers=self.client.HEADERS
+            params=payload, headers=self.client.HEADERS
         )
-
 
     @patch('cerberus.client.CerberusClient._parse_metadata_filename')
     @patch('requests.get')
-    def test_getting_a_file(self, mock_get,mock_parse):
+    def test_getting_a_file(self, mock_get, mock_parse):
         """ get_file: Testing the correct file is returned"""
 
-        mock_parse.return_value=self.file_data
+        mock_parse.return_value = self.file_data
         mock_resp = self._mock_response(content=json.dumps(self.file_data, ensure_ascii=False))
         mock_get.return_value = mock_resp
 
         secret_file = self.client.get_file('fake/path/test.png')
 
         # check to make sure we got the right file
-        #assert_equals(secret_file, file_data)
+        # assert_equals(secret_file, file_data)
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
             self.cerberus_url + '/v1/secure-file/fake/path/test.png',
@@ -524,7 +542,7 @@ class TestCerberusClient(unittest.TestCase):
         secret_file = self.client.get_file_data('fake/path/test.png')
 
         # check to make sure we got the right file
-        #assert_equals(secret_file, self.file_data['data'])
+        # assert_equals(secret_file, self.file_data['data'])
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         mock_get.assert_called_with(
             self.cerberus_url + '/v1/secure-file/fake/path/test.png',
@@ -547,25 +565,28 @@ class TestCerberusClient(unittest.TestCase):
             params={'versionId': '12345'}, headers=self.client.HEADERS
         )
 
-
     @patch('requests.get')
     def test_getting_file_versions(self, mock_get):
         """ get_file_versions: Ensure that the version information of a file is returned """
         version_data = {
-           'has_next': False,
-           'next_offset': None,
-           'limit': 1,
-           'offset': 1,
-           'version_count_in_result': 1,
-           'total_version_count': 2,
-           'secure_data_version_summaries': [{'id': '00000000-0000-0000-0000-000000012345',
-               'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-               'path': 'fake/path',
-               'action': 'UPDATE',
-               'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-               'version_created_ts': '1978-11-27T23:08:14.027Z',
-               'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-               'action_ts': '1978-11-27T23:08:14.027Z'}]
+            'has_next': False,
+            'next_offset': None,
+            'limit': 1,
+            'offset': 1,
+            'version_count_in_result': 1,
+            'total_version_count': 2,
+            'secure_data_version_summaries': [
+                {
+                    'id': '00000000-0000-0000-0000-000000012345',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                }
+            ]
         }
 
         mock_resp = self._mock_response(content=json.dumps(version_data))
@@ -586,27 +607,29 @@ class TestCerberusClient(unittest.TestCase):
         )
 
     @patch("{0}.open".format(builtins_str), new_callable=mock_open, read_data="data")
-    @patch('cerberus.util.request_with_retry')
+    @patch('cerberus.network_util.request_with_retry')
     def test_put_file(self, mock_retry, mock_file):
         """ put_file: Test uploading a file   Especially that the incomming file name and sdb path are handled correctly """
-        c_url=str.join("/", [self.cerberus_url,"v1/secure-file", self.sdb_data["path"]])
+        c_url = str.join("/", [self.cerberus_url, "v1/secure-file", self.sdb_data["path"]])
         sdb_path = self.sdb_data["path"]
-        headers=self.client.HEADERS.copy()
+        headers = self.client.HEADERS.copy()
         headers.pop('Content-Type', None)
 
-        filenames = ["./test.txt", "/abs/path/test.txt", "no-ext", "./rel-no-ext", "/abs/path/no-ext", "//start-with-double-slash"]
+        filenames = ["./test.txt", "/abs/path/test.txt", "no-ext", "./rel-no-ext", "/abs/path/no-ext",
+                     "//start-with-double-slash"]
         f = filenames[0]
         for f in filenames:
             # Should have with self.subTests here, but python2 doesn't support that
             base_f = basename(f)
             assert_is_not(base_f, '', msg="Filename not found")
-            mock_retry.return_value.status_code=204
+            mock_retry.return_value.status_code = 204
             mfile = open(f, 'rb')
-            upload = self.client.put_file(str.join("", [sdb_path, base_f]) , mfile)
-            mock_retry.assert_called_with(c_url + base_f, 'post', 3, files={'file-content': (base_f, mfile)}, headers=headers) 
+            upload = self.client.put_file(str.join("", [sdb_path, base_f]), mfile)
+            mock_retry.assert_called_with(c_url + base_f, 'post', 3, files={'file-content': (base_f, mfile)},
+                                          headers=headers)
 
+        # ---- secrets ----
 
-## ---- secrets ----
     @patch('requests.get')
     def test_getting_a_secret(self, mock_get):
         """ get_secret: Testing the correct secret is returned"""
@@ -678,25 +701,28 @@ class TestCerberusClient(unittest.TestCase):
             params={'versionId': '12345'}, headers=self.client.HEADERS
         )
 
-
     @patch('requests.get')
     def test_getting_secret_versions(self, mock_get):
         """ get_secret_versions: Ensure that the version information of a secret is returned """
         version_data = {
-           'has_next': False,
-           'next_offset': None,
-           'limit': 1,
-           'offset': 1,
-           'version_count_in_result': 1,
-           'total_version_count': 2,
-           'secure_data_version_summaries': [{'id': '00000000-0000-0000-0000-000000012345',
-               'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-               'path': 'fake/path',
-               'action': 'UPDATE',
-               'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-               'version_created_ts': '1978-11-27T23:08:14.027Z',
-               'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-               'action_ts': '1978-11-27T23:08:14.027Z'}]
+            'has_next': False,
+            'next_offset': None,
+            'limit': 1,
+            'offset': 1,
+            'version_count_in_result': 1,
+            'total_version_count': 2,
+            'secure_data_version_summaries': [
+                {
+                    'id': '00000000-0000-0000-0000-000000012345',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                }
+            ]
         }
 
         mock_resp = self._mock_response(content=json.dumps(version_data))
@@ -715,7 +741,6 @@ class TestCerberusClient(unittest.TestCase):
             params={'limit': '1', 'offset': '1'},
             headers=self.client.HEADERS
         )
-
 
     @patch('requests.get')
     def test_get_secrets_invalid_path(self, mget):
@@ -736,7 +761,9 @@ class TestCerberusClient(unittest.TestCase):
             }
         })
 
-        mget.side_effect = [self._mock_response(status=500, content=error_data), self._mock_response(status=502, content=error_data), self._mock_response(status=200, content=secret_data)]
+        mget.side_effect = [self._mock_response(status=500, content=error_data),
+                            self._mock_response(status=502, content=error_data),
+                            self._mock_response(status=200, content=secret_data)]
         self.client.get_secrets_data('fake/path')
 
     @patch('requests.get')
@@ -905,7 +932,8 @@ class TestCerberusClient(unittest.TestCase):
             ]
         }
 
-        mock_get.side_effect = [self._mock_response(content=json.dumps(metadata_1)), self._mock_response(content=json.dumps(metadata_2))]
+        mock_get.side_effect = [self._mock_response(content=json.dumps(metadata_1)),
+                                self._mock_response(content=json.dumps(metadata_2))]
         metadata = self.client.get_metadata()
 
         # confirm the sdb names match

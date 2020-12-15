@@ -20,8 +20,9 @@ import requests
 from .aws_auth import AWSAuth
 from .user_auth import UserAuth
 from . import CerberusClientException, CLIENT_VERSION
-from .util import throw_if_bad_response, get_with_retry, post_with_retry, put_with_retry, delete_with_retry, \
+from .network_util import throw_if_bad_response, get_with_retry, post_with_retry, put_with_retry, delete_with_retry, \
     head_with_retry
+from .url_util import ensure_single_trailing_slash, ensure_no_trailing_slash
 
 import ast
 import json
@@ -29,7 +30,6 @@ import logging
 import sys
 import warnings
 import os
-
 
 logger = logging.getLogger(__name__)
 
@@ -48,32 +48,27 @@ class CerberusClient(object):
         a botocore.session.Session object, the Cerberus client will sign the request using the session provided
         instead of the default session.
 
-        verbose (default True) controls if the cerberus library will output some debuging statements to the
+        verbose (default True) controls if the cerberus library will output some debugging statements to the
         console (sys.stderr).
         
         """
-        self.cerberus_url = cerberus_url
+        self.cerberus_url = ensure_no_trailing_slash(cerberus_url)
         self.username = username or ""
         self.password = password or ""
         self.region = region
         self.token = token
+        self.aws_session = aws_session
+
         if verbose is None or type(verbose) != bool:
             self.verbose = True
         else:
             self.verbose = verbose
-        self.aws_session = aws_session
+
         if self.token is None:
             self._set_token()
 
         self.HEADERS['X-Cerberus-Token'] = self.token
         self.HEADERS['X-Cerberus-Client'] = 'CerberusPythonClient/' + CLIENT_VERSION
-
-    # noinspection PyMethodMayBeStatic
-    def _add_slash(self, string=None):
-        """ if a string doesn't end in a '/' add one """
-        if not str.endswith(string, '/'):
-            return str.join('', [string, '/'])
-        return str(string)
 
     def _set_token(self):
         """Set the Cerberus token based on auth type"""
@@ -101,8 +96,7 @@ class CerberusClient(object):
 
         Roles are permission levels that are granted to IAM or User Groups.  Associating the id for the write role
           would allow that IAM or User Group to write in the safe deposit box."""
-        roles_resp = get_with_retry(self.cerberus_url + '/v1/role',
-                                    headers=self.HEADERS)
+        roles_resp = get_with_retry(self.cerberus_url + '/v1/role', headers=self.HEADERS)
 
         throw_if_bad_response(roles_resp)
         return roles_resp.json()
@@ -154,9 +148,9 @@ class CerberusClient(object):
         if iam_principal_permissions is None:
             iam_principal_permissions = []
         if list != type(user_group_permissions):
-            raise(TypeError('Expected list, but got ' + str(type(user_group_permissions))))
+            raise (TypeError('Expected list, but got ' + str(type(user_group_permissions))))
         if list != type(iam_principal_permissions):
-            raise(TypeError('Expected list, but got ' + str(type(iam_principal_permissions))))
+            raise (TypeError('Expected list, but got ' + str(type(iam_principal_permissions))))
         temp_data = {
             "name": name,
             "description": description,
@@ -185,8 +179,7 @@ class CerberusClient(object):
 
     def get_sdbs(self):
         """ Return a list of each SDB the client is authorized to view"""
-        sdb_resp = get_with_retry(self.cerberus_url + '/v2/safe-deposit-box',
-                                  headers=self.HEADERS)
+        sdb_resp = get_with_retry(self.cerberus_url + '/v2/safe-deposit-box', headers=self.HEADERS)
 
         throw_if_bad_response(sdb_resp)
         return sdb_resp.json()
@@ -200,7 +193,6 @@ class CerberusClient(object):
         )
 
         throw_if_bad_response(sdb_resp)
-
         return sdb_resp.json()['path']
 
     def get_sdb_keys(self, path):
@@ -211,7 +203,6 @@ class CerberusClient(object):
         )
 
         throw_if_bad_response(list_resp)
-
         return list_resp.json()['data']['keys']
 
     def get_sdb_id(self, sdb):
@@ -233,7 +224,7 @@ class CerberusClient(object):
         json_resp = self.get_sdbs()
 
         # Deal with the supplied path possibly missing an ending slash
-        path = self._add_slash(sdb_path)
+        path = ensure_single_trailing_slash(sdb_path)
 
         for r in json_resp:
             if r['path'] == path:
@@ -333,6 +324,7 @@ class CerberusClient(object):
         return sdb_resp.json()
 
     """------ Files ------"""
+
     def delete_file(self, secure_data_path):
         """Delete a file at the given secure data path"""
         secret_resp = delete_with_retry(self.cerberus_url + '/v1/secure-file/' + secure_data_path,
@@ -377,7 +369,7 @@ class CerberusClient(object):
         """
         Parse the header metadata to pull out the filename and then store it under the key 'filename'
         """
-        index = metadata['Content-Disposition'].index('=')+1
+        index = metadata['Content-Disposition'].index('=') + 1
         metadata['filename'] = metadata['Content-Disposition'][index:].replace('"', '')
         return metadata
 
@@ -402,8 +394,7 @@ class CerberusClient(object):
         This only returns the file data, and does not include any of the meta information stored with it.
 
         Keyword arguments:
-
-            secure_data_path (string) -- full path in the secret deposit box that contains the file key
+        secure_data_path (string) -- full path in the secret deposit box that contains the file key
         """
         return self._get_file(secure_data_path, version).content
 
@@ -462,7 +453,7 @@ class CerberusClient(object):
 
         # Because of the addition of versionId and the way URLs are constructed, secure_data_path should
         #  always end in a '/'.
-        secure_data_path = self._add_slash(secure_data_path)
+        secure_data_path = ensure_single_trailing_slash(secure_data_path)
         secret_resp = get_with_retry(self.cerberus_url + '/v1/secure-files/' + secure_data_path,
                                      params=payload, headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
@@ -475,8 +466,8 @@ class CerberusClient(object):
         Keyword arguments:
         secure_data_path -- full path in the safety deposit box that contains the file key to store things under
         filehandle -- Pass an opened filehandle to the file you want to upload.
-           Make sure that the file was opened in binary mode, otherwise the size calculations
-           can be off for text files.
+        Make sure that the file was opened in binary mode, otherwise the size calculations
+        can be off for text files.
         content_type -- Optional.  Set the Mime type of the file you're uploading.
         """
 
@@ -498,6 +489,7 @@ class CerberusClient(object):
         return secret_resp
 
     """------ Secrets -----"""
+
     def delete_secret(self, secure_data_path):
         """Delete a secret from the given secure data path"""
         secret_resp = delete_with_retry(self.cerberus_url + '/v1/secret/' + secure_data_path,
@@ -620,7 +612,7 @@ class CerberusClient(object):
 
         # Because of the addition of versionId and the way URLs are constructed, secure_data_path should
         #  always end in a '/'.
-        secure_data_path = self._add_slash(secure_data_path)
+        secure_data_path = ensure_single_trailing_slash(secure_data_path)
         secret_resp = get_with_retry(self.cerberus_url + '/v1/secret/' + secure_data_path + '?list=true',
                                      headers=self.HEADERS)
         throw_if_bad_response(secret_resp)
