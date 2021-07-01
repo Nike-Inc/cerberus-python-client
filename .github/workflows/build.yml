@@ -34,7 +34,7 @@ jobs:
         run: |
           nosetests --with-coverage --cover-xml tests/
       - name: Upload coverage report to CodeCov
-        uses: codecov/codecov-action@v1.5.0
+        uses: codecov/codecov-action@v1.5.2
         with:
           file: coverage.xml # optional
           fail_ci_if_error: true # optional (default = false)
