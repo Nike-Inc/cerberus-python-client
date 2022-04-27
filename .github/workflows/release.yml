@@ -17,9 +17,9 @@ jobs:
         python-version: [3.6]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3.1.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -41,7 +41,7 @@ jobs:
           twine upload -u ${{secrets.PYPI_USERNAME}} -p ${{secrets.PYPI_PASSWORD}}  dist/*
       - name: Slack notification when release fails
         if: ${{ failure() }}
-        uses: rtCamp/action-slack-notify@v2.1.2
+        uses: rtCamp/action-slack-notify@v2.2.0
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_CHANNEL: cerberus-alerts

@@ -18,9 +18,9 @@ jobs:
         python-version: [2.7, 3.6]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3.1.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -34,14 +34,15 @@ jobs:
         run: |
           nosetests --with-coverage --cover-xml tests/
       - name: Upload coverage report to CodeCov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2.1.0
         with:
           file: coverage.xml # optional
           fail_ci_if_error: true # optional (default = false)
           verbose: true
       - name: Slack notification when master build fails
         if: ${{ failure() && github.ref == 'refs/heads/master'}}
-        uses: rtCamp/action-slack-notify@v2.1.2
+        uses: rtCamp/action-slack-notify@v2.2.0
+
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_CHANNEL: cerberus-alerts
