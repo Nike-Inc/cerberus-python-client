@@ -10,22 +10,27 @@ You may obtain a copy of the License at
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and* limitations under the License.*
+See the License for the specific language governing permissions and*
+limitations under the License.*
 """
 
 import logging
 
 from . import CerberusClientException, CLIENT_VERSION
 
-from .network_util import throw_if_bad_response, get_with_retry, post_with_retry
+from .network_util import throw_if_bad_response
+from .network_util import get_with_retry
+from .network_util import post_with_retry
 
 
 logger = logging.getLogger(__name__)
 
 
 class UserAuth(object):
-    """Class to authenticate with username and password and returns a cerberus token"""
-    HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
+    """Class to authenticate with username and
+       password and returns a cerberus token"""
+    HEADERS = {"Content-Type": "application/json",
+               "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
 
     def __init__(self, cerberus_url, username, password):
         self.cerberus_url = cerberus_url
@@ -33,7 +38,8 @@ class UserAuth(object):
         self.password = password
 
     def get_auth(self):
-        """Returns auth response which has client token unless MFA is required"""
+        """Returns auth response which has client
+           token unless MFA is required"""
         auth_resp = get_with_retry(self.cerberus_url + '/v2/auth/user',
                                    auth=(self.username, self.password),
                                    headers=self.HEADERS)
@@ -56,7 +62,8 @@ class UserAuth(object):
         return token
 
     def get_mfa(self, auth_resp):
-        """Gets MFA code from user and returns response which includes the client token"""
+        """Gets MFA code from user and returns response which
+           includes the client token"""
         devices = auth_resp['data']['devices']
         if len(devices) == 1:
             # If there's only one option, don't show selection prompt
@@ -73,17 +80,25 @@ class UserAuth(object):
         if selection.isdigit():
             selection_num = int(str(selection))
         else:
-            raise CerberusClientException(str.join('', ["Selection: '", selection, "' is not a number"]))
+            msg = str.join('', ["Selection: '",
+                           selection, "' is not a number"])
+            raise CerberusClientException(msg)
 
         if (selection_num >= x) or (selection_num < 0):
-            raise CerberusClientException(str.join('', ["Selection: '", str(selection_num), "' is out of range"]))
+            msg = str.join('',
+                           ["Selection: '",
+                            str(selection_num), "' is out of range"])
+            raise CerberusClientException(msg)
 
-        sec_code = input('Enter ' + auth_resp['data']['devices'][selection_num]['name'] + ' security code: ')
+        device_id = auth_resp['data']['devices'][selection_num]['id']
+        sec_code = input('Enter ' +
+                         auth_resp['data']['devices'][selection_num]['name'] +
+                         ' security code: ')
 
         mfa_resp = post_with_retry(
             self.cerberus_url + '/v2/auth/mfa_check',
             json={'otp_token': sec_code,
-                  'device_id': auth_resp['data']['devices'][selection_num]['id'],
+                  'device_id': device_id,
                   'state_token': auth_resp['data']['state_token']},
             headers=self.HEADERS
         )
