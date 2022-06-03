@@ -814,9 +814,42 @@ class TestCerberusClient(unittest.TestCase):
             ]
         }
 
-        mock_resp = self._mock_response(content=json.dumps(version_data))
-        mock_get.return_value = mock_resp
+        prev_version_data = {
+            'has_next': True,
+            'next_offset': None,
+            'limit': 1,
+            'offset': 1,
+            'version_count_in_result': 1,
+            'total_version_count': 2,
+            'secure_data_version_summaries': [
+                {
+                    'id': '00000000-0000-0000-0000-000000112345',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-1eeeeeeeeee',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                },
+                {
+                    'id': '00000000-0000-0000-0000-000000023456',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18eee6f4',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                }
+            ]
+        }
 
+        mock_resp = self._mock_response(content=json.dumps(version_data))
+        mock_prev_resp = self._mock_response(content=json.dumps(prev_version_data))
+        mock_get.side_effect = [mock_prev_resp, mock_resp]
+
+        _files = self.client.get_file_versions('fake/path', limit=1, offset=1)
         files = self.client.get_file_versions('fake/path', limit=1, offset=1)
 
         # check to make sure we got the right file
@@ -830,6 +863,28 @@ class TestCerberusClient(unittest.TestCase):
             params={'limit': '1', 'offset': '1'},
             headers=self.client.HEADERS
         )
+
+        mock_get.reset_mock()
+        prev_version_data['has_next'] = False
+        mock_prev_resp = self._mock_response(content=json.dumps(prev_version_data))
+        mock_get.return_value = mock_prev_resp
+        mock_get.side_effect = None
+        version_info = self.client._get_all_file_versions('fake/path')
+        versions = []
+        try:
+            for version in version_info:
+                versions.append(version)
+
+        except Exception:
+            pass
+
+        assert versions
+        assert_equals(versions[0]['version']['id'], '00000000-0000-0000-0000-000000112345')
+        assert_equals(versions[1]['version']['id'], '00000000-0000-0000-0000-000000023456')
+
+#        try:
+#            while(stuff
+
 
     @patch("{0}.open".format(builtins_str), new_callable=mock_open, read_data="data")
     @patch('cerberus.network_util.request_with_retry')
@@ -886,6 +941,48 @@ class TestCerberusClient(unittest.TestCase):
                                        headers={'Content-Type': 'application/json',
                                                 'X-Cerberus-Token': 'ua_token',
                                                 'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+
+    @patch('cerberus.network_util.request_with_retry')
+    def test_put_secret(self, mock_retry):
+        """ put_secret: Test creating or updating a secret"""
+        assert_equals(self.cerberus_url, "https://cerberus.fake.com")
+
+        secure_data_path ="/".join([self.cerberus_url, "v1/secret", self.sdb_data["path"]])
+        assert_equals(secure_data_path, "https://cerberus.fake.com/v1/secret/app/disco-events/")
+
+        secret = {"contact": {"key": "10011"}}
+        new_secret = {"contact": {"key": "10012"}}
+
+        secret_data = {"data": secret}
+
+        headers = self.client.HEADERS.copy()
+        upload = self.client.put_secret('app/disco-events/', secret, False)
+        mock_retry.assert_called_with(secure_data_path, 'post', 3, data=json.dumps(secret), headers=headers)
+
+        mock_retry.reset_mock()
+        mock_old_secret_resp = self._mock_response(status=204, content=json.dumps(secret_data))
+        mock_204_resp = self._mock_response(status=204, content='')
+
+        mock_retry.side_effect = [mock_old_secret_resp, mock_204_resp]
+        upload = self.client.put_secret('app/disco-events/', new_secret, True)
+        assert_equals(upload.status_code, 204)
+
+        mock_retry.reset_mock()
+        mock_retry.side_effect = None
+        mock_404 = self._mock_response(status=404, content=json.dumps(secret_data))
+        mock_retry.return_value = mock_404
+
+        with self.assertRaises(CerberusClientException):
+            self.client.put_secret('app/disco-events/', new_secret, True)
+
+
+        mock_retry.reset_mock()
+        mock_okay_resp = self._mock_response(status=404, content=json.dumps(secret_data))
+        #mock_retry.side_effect = [mock_okay_resp, mock_204_resp]
+        mock_retry.side_effect = [mock_okay_resp, mock_204_resp]
+        upload = self.client.put_secret('app/disco-events/', new_secret, True)
+        assert_equals(upload.content, b'')
+
 
 
     @patch('requests.get')
@@ -960,6 +1057,19 @@ class TestCerberusClient(unittest.TestCase):
         )
 
     @patch('requests.get')
+    def test_list_secrets(self, mock_get):
+        secret_info = {'auth': None, 'data': {'keys': ['foo']},
+                       'lease_duration': 3600, 'lease_id': '', 'metadata': {},
+                       'renewable': False, 'request_id': None,
+                       'warnings': None, 'wrap_info': None}
+
+        mock_resp = self._mock_response(content=json.dumps(secret_info))
+        mock_get.return_value = mock_resp
+        secrets = self.client.list_secrets('fake/path')
+
+        assert_equals(secrets['data']['keys'], ['foo'])
+
+    @patch('requests.get')
     def test_getting_secret_versions(self, mock_get):
         """ get_secret_versions: Ensure that the version information of a secret is returned """
         version_data = {
@@ -999,6 +1109,73 @@ class TestCerberusClient(unittest.TestCase):
             params={'limit': '1', 'offset': '1'},
             headers=self.client.HEADERS
         )
+
+        multi_version_data = {
+            'has_next': False,
+            'next_offset': None,
+            'limit': 1,
+            'offset': 1,
+            'version_count_in_result': 1,
+            'total_version_count': 2,
+            'secure_data_version_summaries': [
+                {
+                    'id': '00000000-0000-0000-0000-000000012345',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                },
+                {
+                    'id': '00000000-0000-0000-0000-000000112345',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-1eeeeeeeeeee',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                }
+            ]
+        }
+
+        mock_resp_multi = self._mock_response(content=json.dumps(multi_version_data))
+        mock_get.reset_mock()
+        mock_get.return_value = mock_resp_multi
+
+        version_info = self.client._get_all_secret_version_ids('fake/path')
+        versions = []
+        for version in version_info:
+            versions.append(version)
+
+
+        assert_equals(versions[0]['id'], '00000000-0000-0000-0000-000000012345')
+        assert_equals(versions[1]['id'], '00000000-0000-0000-0000-000000112345')
+
+
+        secret_data = { "data": { "sushi": "ikenohana", "ramen": "yuzu" }}
+        secret_data_json = json.dumps(secret_data)
+        v1_data_resp = self._mock_response(status=200, content=secret_data_json)
+
+        secret_data['data']['ramen'] = '醤油'
+        secret_data_json = json.dumps(secret_data)
+        v2_data_resp = self._mock_response(status=200, content=secret_data_json)
+
+
+        mock_get.reset_mock()
+        mock_get.return_value = None
+        mock_get.side_effect = [mock_resp_multi, v1_data_resp, v2_data_resp]
+
+        version_info = self.client._get_all_secret_versions('fake/path')
+        versions = []
+        for version in version_info:
+            versions.append(version)
+
+        assert_equals(versions[0]['secret']['ramen'], 'yuzu')
+        assert_equals(versions[1]['secret']['ramen'], '醤油')
+
 
     @patch('requests.get')
     def test_get_secrets_invalid_path(self, mget):
@@ -1229,3 +1406,4 @@ class TestCerberusClient(unittest.TestCase):
                                      headers={'Content-Type': 'application/json',
                                               'X-Cerberus-Token': 'ua_token',
                                               'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+
