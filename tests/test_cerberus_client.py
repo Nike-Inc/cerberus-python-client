@@ -1159,7 +1159,7 @@ class TestCerberusClient(unittest.TestCase):
         secret_data_json = json.dumps(secret_data)
         v1_data_resp = self._mock_response(status=200, content=secret_data_json)
 
-        secret_data['data']['ramen'] = '醤油'
+        secret_data['data']['ramen'] = 'shouyu' # python 2.7 did not like unicode
         secret_data_json = json.dumps(secret_data)
         v2_data_resp = self._mock_response(status=200, content=secret_data_json)
 
@@ -1174,7 +1174,7 @@ class TestCerberusClient(unittest.TestCase):
             versions.append(version)
 
         assert_equals(versions[0]['secret']['ramen'], 'yuzu')
-        assert_equals(versions[1]['secret']['ramen'], '醤油')
+        assert_equals(versions[1]['secret']['ramen'], 'shouyu')
 
 
     @patch('requests.get')
