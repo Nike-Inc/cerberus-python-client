@@ -11,7 +11,8 @@ You may obtain a copy of the License at
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and* limitations under the License.*
+See the License for the specific language governing permissions and*
+limitations under the License.*
 """
 
 from requests.exceptions import RequestException
@@ -29,10 +30,13 @@ def throw_if_bad_response(response):
         response.raise_for_status()
     except RequestException:
         try:
-            msg = 'Response code: {}; response body:\n{}'.format(response.status_code, json.dumps(response.json(), indent=2))
+            json_str = json.dumps(response.json(), indent=2)
+            msg = ('Response code: {}; response body:\n{}'
+                   .format(response.status_code, json_str))
             raise CerberusClientException(msg)
         except ValueError:
-            msg = 'Response code: {}; response body:\n{}'.format(response.status_code, response.text)
+            msg = ('Response code: {}; response body:\n{}'
+                   .format(response.status_code, response.text))
             raise CerberusClientException(msg)
 
 

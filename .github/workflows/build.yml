@@ -32,7 +32,7 @@ jobs:
           python setup.py install
       - name: Run Tests
         run: |
-          nosetests --with-coverage --cover-xml tests/
+          tox
       - name: Upload coverage report to CodeCov
         uses: codecov/codecov-action@v2.1.0
         with:

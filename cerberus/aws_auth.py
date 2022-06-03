@@ -10,7 +10,8 @@ You may obtain a copy of the License at
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and* limitations under the License.*
+See the License for the specific language governing permissions and*
+limitations under the License.*
 """
 
 # For python 2.7
@@ -30,7 +31,8 @@ logger = logging.getLogger(__name__)
 class AWSAuth(object):
     """Class to authenticate with an IAM Role"""
     CN_REGIONS = {"cn-north-1", "cn-northwest-1"}
-    HEADERS = {"Content-Type": "application/json", "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
+    HEADERS = {"Content-Type": "application/json",
+               "X-Cerberus-Client": "CerberusPythonClient/" + CLIENT_VERSION}
 
     def __init__(self, cerberus_url, region, aws_session=None, verbose=None):
         self.cerberus_url = cerberus_url
@@ -50,11 +52,13 @@ class AWSAuth(object):
         readonly_credentials = creds.get_frozen_credentials()
 
         # hardcode get-caller-identity request
-        data = OrderedDict((('Action', 'GetCallerIdentity'), ('Version', '2011-06-15')))
+        data = OrderedDict((('Action', 'GetCallerIdentity'),
+                            ('Version', '2011-06-15')))
         url = 'https://sts.{}.amazonaws.com'.format(self.region)
         if self.region in self.CN_REGIONS:
             url += ".cn"
-        request_object = awsrequest.AWSRequest(method='POST', url=url, data=data)
+        request_object = awsrequest.AWSRequest(method='POST',
+                                               url=url, data=data)
 
         signer = auth.SigV4Auth(readonly_credentials, 'sts', self.region)
         signer.add_auth(request_object)
@@ -66,13 +70,16 @@ class AWSAuth(object):
         for header in self.HEADERS:
             signed_headers[header] = self.HEADERS[header]
 
-        resp = post_with_retry(self.cerberus_url + '/v2/auth/sts-identity', headers=signed_headers)
+        resp = post_with_retry(self.cerberus_url + '/v2/auth/sts-identity',
+                               headers=signed_headers)
         throw_if_bad_response(resp)
 
         token = resp.json()['client_token']
         iam_principal_arn = resp.json()['metadata']['aws_iam_principal_arn']
         if self.verbose:
-            print('Successfully authenticated with Cerberus as {}'.format(iam_principal_arn), file=sys.stderr)
-        logger.info('Successfully authenticated with Cerberus as {}'.format(iam_principal_arn))
+            print('Successfully authenticated with Cerberus as {}'
+                  .format(iam_principal_arn), file=sys.stderr)
+        logger.info('Successfully authenticated with Cerberus as {}'
+                    .format(iam_principal_arn))
 
         return token
