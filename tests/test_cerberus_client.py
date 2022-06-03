@@ -19,6 +19,8 @@ import json
 import unittest
 import platform
 from os.path import basename
+import os
+import copy
 
 import requests
 import mock
@@ -28,6 +30,8 @@ from .matcher import AnyDictWithKey
 
 from cerberus import CerberusClientException
 from cerberus.client import CerberusClient
+from cerberus.aws_auth import AWSAuth
+from cerberus.user_auth import UserAuth
 
 # Use the right builtins module for patching
 if int(platform.python_version_tuple()[0]) < 3:
@@ -39,12 +43,22 @@ else:
 class TestCerberusClient(unittest.TestCase):
     """Class to test the cerberus client. Mock is used to mock external calls"""
 
-    @patch('cerberus.client.CerberusClient._set_token', return_value='1234-asdf-1234hy-qwer6')
-    def setUp(self, *args):
+    @patch('cerberus.aws_auth.AWSAuth.get_token')
+    @patch('cerberus.aws_auth.AWSAuth.__init__')
+    @patch('cerberus.user_auth.UserAuth.get_token')
+    @patch('cerberus.user_auth.UserAuth.__init__')
+    def setUp(self, mock_ua_init, mock_ua_get_token, mock_awsa_init, mock_awsa_get_token):
+        mock_ua_init.return_value = None
+        mock_ua_get_token.return_value = "ua_token"
+
+        mock_awsa_init.return_value = None
+        mock_awsa_get_token.return_value = "awsa_token"
+
         self.cerberus_url = "https://cerberus.fake.com"
         self.client = CerberusClient(
             self.cerberus_url,
-            'testuser', 'hardtoguesspasswd'
+            'testuser', 'hardtoguesspasswd',
+            verbose=True
         )
         self.auth_resp = {
             "status": "mfa_req",
@@ -82,6 +96,43 @@ class TestCerberusClient(unittest.TestCase):
                  }
             ],
         }
+        self.create_sdb_data = {
+            'id': '5f0-99-414-bc-e5909c',
+            'name': 'Disco Events',
+            'description': 'Studio 54',
+            'path': 'app/disco-events/',
+            'category_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+            'created_by': 'tester@studio54.com',
+            'created_ts': '1978-11-27T23:08:14.027Z',
+            'iam_principal_permissions': [
+                {
+                    'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                },
+                {
+                    'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
+                    'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                },
+                {
+                    'created_by': 'tester@studio54.com',
+                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
+                    'id': '27731199-7055-3c4b-3883-9f01f17bc034',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '1974-11-17T00:02:30Z',
+                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
+                }
+            ],
+            'owner': 'Admin.Studio.54',
+            'user_group_permissions': []
+        }
         self.file_data = {
             'Date': 'Sun, 17 November 1974 00:02:30 GMT',
             'Content-Type': 'image/png; charset=UTF-8',
@@ -97,13 +148,14 @@ class TestCerberusClient(unittest.TestCase):
             self.file_data['data'] = "Test String"
 
     @staticmethod
-    def _mock_response(status=200, reason='OK', content=''):
+    def _mock_response(status=200, reason='OK', content='', headers=''):
         mock_resp = requests.Response()
         mock_resp.status_code = status
         # Reason the status code occurred.
         mock_resp.reason = reason
         # Raw content in byte
         mock_resp._content = bytes(content.encode('utf-8'))
+        mock_resp.headers = headers
         return mock_resp
 
     @staticmethod
@@ -114,6 +166,68 @@ class TestCerberusClient(unittest.TestCase):
         mock_resp.reason = reason
         mock_resp._content = bytes(content.encode('utf-8'))
         return mock_resp.json()
+
+    @patch('cerberus.aws_auth.AWSAuth.get_token')
+    @patch('cerberus.aws_auth.AWSAuth.__init__')
+    @patch('cerberus.user_auth.UserAuth.get_token')
+    @patch('cerberus.user_auth.UserAuth.__init__')
+    @patch.dict('os.environ', {})
+    def test_set_token(self, mock_ua_init, mock_ua_get_token, mock_awsa_init, mock_awsa_get_token):
+        """ Testing set_token """
+        mock_ua_init.return_value = None
+        mock_ua_get_token.return_value = "ua_token"
+
+        mock_awsa_init.return_value = None
+        mock_awsa_get_token.return_value = "awsa_token"
+        cerb_client = CerberusClient('https://foo', verbose=False)
+        cerb_client.username = "foo"
+        cerb_client._set_token()
+        assert_equals(cerb_client.token, 'ua_token')
+
+        cerb_client.username = None
+        cerb_client._set_token()
+        assert_equals(cerb_client.token, 'awsa_token')
+        assert True
+
+    @patch('requests.get')
+    def test_list_roles(self, mock_get):
+        mock_dict =  [{'created_by': 'system',
+                       'id': 'foo',
+                       'name': 'owner'},
+                      {'created_by': 'system',
+                       'id': 'foo',
+                       'name': 'write'},
+                      {'created_by': 'system',
+                       'id': 'foo',
+                       'name': 'read'}]
+
+        mock_resp = self._mock_response(content=json.dumps(mock_dict))
+        mock_get.return_value = mock_resp
+        roles = self.client.list_roles()
+        assert_equals(roles, {'owner': 'foo', 'write': 'foo', 'read': 'foo'})
+
+        role = self.client.get_role("write")
+        assert_equals(role, 'foo')
+
+        with self.assertRaises(CerberusClientException):
+            role = self.client.get_role("edit")
+
+    @patch('requests.get')
+    def test_get_categories(self, mock_get):
+        mock_dict = [{'created_by': 'system',
+                      'display_name': 'Applications',
+                      'id': 'foo',
+                      'path': 'app'},
+                     {'created_by': 'system',
+                      'display_name': 'Shared',
+                      'id': 'bar',
+                      'path': 'shared'}]
+
+        mock_resp = self._mock_response(content=json.dumps(mock_dict))
+        mock_get.return_value = mock_resp
+        categories = self.client.get_categories()
+        names = set([category['display_name'] for category in categories])
+        assert_equals(names, set(['Applications', 'Shared']))
 
     def test_username(self):
         """ Testing that correct username is returned"""
@@ -150,21 +264,6 @@ class TestCerberusClient(unittest.TestCase):
             self.cerberus_url + '/v2/safe-deposit-box',
             headers=self.client.HEADERS
         )
-
-    sdb_data = [
-        {
-            "id": "5f0-99-414-bc-e5909c",
-            "name": "Disco Events",
-            "path": "app/disco-events/",
-            "category_id": "b07-42d0-e6-9-0a47c03"
-        },
-        {
-            "id": "a7192aa7-83f0-45b7-91fb-f6b0eb",
-            "name": "snowflake",
-            "path": "app/snowflake/",
-            "category_id": "b042d0-e6-90-0aec03"
-        }
-    ]
 
     @patch('requests.get')
     def test_list_sdbs(self, mock_get):
@@ -245,6 +344,38 @@ class TestCerberusClient(unittest.TestCase):
             headers=self.client.HEADERS
         )
 
+        with self.assertRaises(CerberusClientException):
+            sdb_id = self.client.get_sdb_id_by_path("app/notfoundsdb/")
+
+    @patch('requests.get')
+    def test_get_sdb_secret_version_paths(self, mock_get):
+        mock_get.return_value = self._mock_response(content=json.dumps([]))
+        resp = self.client.get_sdb_secret_version_paths("2336d3-2375-f")
+        assert_equals(resp, [])
+
+    @patch('requests.get')
+    def test_get_sdb_secret_version_paths_by_path(self, mock_get):
+        sdb_data = [
+            {
+                "id": "5f0-99-414-bc-e5909c",
+                "name": "Disco Events",
+                "path": "app/disco-events/",
+                "category_id": "b07-42d0-e6-9-0a47c03"
+            },
+            {
+                "id": "a7192aa7-83f0-45b7-91fb-f6b0eb",
+                "name": "snowflake",
+                "path": "app/snowflake/",
+                "category_id": "b042d0-e6-90-0aec03"
+            }
+        ]
+        empty_list_resp = self._mock_response(content=json.dumps([]))
+        sdb_resp = self._mock_response(content=json.dumps(sdb_data))
+
+        mock_get.side_effect = [sdb_resp, empty_list_resp]
+        resp = self.client.get_sdb_secret_version_paths_by_path("app/snowflake/")
+        assert_equals(resp, [])
+
     @patch('requests.get')
     def test_get_sdb_id_by_path_no_slash(self, mock_get):
         """
@@ -277,9 +408,8 @@ class TestCerberusClient(unittest.TestCase):
             headers=self.client.HEADERS
         )
 
-    @patch('cerberus.client.CerberusClient.get_sdb_id', return_value="5f0-99-414-bc-e5909c")
     @patch('requests.get')
-    def test_get_sdb_by_id(self, mock_get, mock_sdb_id):
+    def test_get_sdb_by_id(self, mock_get): #, mock_sdb_id):
         """ Test that get_sdb_by_id returns some details of the sdb """
 
         mock_resp = self._mock_response(content=json.dumps(self.sdb_data))
@@ -294,13 +424,16 @@ class TestCerberusClient(unittest.TestCase):
             headers=self.client.HEADERS
         )
 
-    @patch('cerberus.client.CerberusClient.get_sdb_id', return_value="5f0-99-414-bc-e5909c")
     @patch('requests.get')
-    def test_get_sdb_by_name(self, mock_get, mock_sdb_id):
+    def test_get_sdb_by_name(self, mock_get):
         """ Test that get_sdb_by_name returns some details of the sdb """
 
         mock_resp = self._mock_response(content=json.dumps(self.sdb_data))
-        mock_get.return_value = mock_resp
+        mock_get_sdbs_resp = self._mock_response(content=json.dumps([self.sdb_data]))
+        mock_get.side_effect = [mock_get_sdbs_resp, mock_resp, mock_resp, mock_resp]
+
+        # Calls:
+        #     get_sdb_by_name -> get_sdb_by_id -> get_sdb_id -> get_sdbs
 
         details = self.client.get_sdb_by_name("Disco Events")
 
@@ -311,13 +444,16 @@ class TestCerberusClient(unittest.TestCase):
             headers=self.client.HEADERS
         )
 
-    @patch('cerberus.client.CerberusClient.get_sdb_id_by_path', return_value="5f0-99-414-bc-e5909c")
     @patch('requests.get')
-    def test_get_sdb_by_path(self, mock_get, mock_sdb_id):
+    def test_get_sdb_by_path(self, mock_get):
         """ Test that get_sdb_by_path returns some details of the sdb """
 
         mock_resp = self._mock_response(content=json.dumps(self.sdb_data))
-        mock_get.return_value = mock_resp
+        mock_get_sdbs_resp = self._mock_response(content=json.dumps([self.sdb_data]))
+        mock_get.side_effect = [mock_get_sdbs_resp, mock_resp, mock_resp, mock_resp]
+
+        # Calls:
+        #     get_sdb_by_path -> get_sdb_by_id -> get_sdb_id_by_path -> get_sdbs
 
         details = self.client.get_sdb_by_path("app/disco-events/")
 
@@ -328,9 +464,8 @@ class TestCerberusClient(unittest.TestCase):
             headers=self.client.HEADERS
         )
 
-    @patch('cerberus.client.CerberusClient.get_sdb_id', return_value="5f0-99-414-bc-e5909c")
     @patch('requests.get')
-    def test_get_sdb_path(self, mock_get, mock_sdb_id):
+    def test_get_sdb_path(self, mock_get):
         """ Test that get_sdb_path returns the correct path """
         sdb_data = {
             "id": "5f0-99-414-bc-e5909c",
@@ -339,8 +474,12 @@ class TestCerberusClient(unittest.TestCase):
             "path": "app/disco-events/"
         }
 
-        mock_resp = self._mock_response(content=json.dumps(sdb_data))
-        mock_get.return_value = mock_resp
+        mock_resp = self._mock_response(content=json.dumps(self.sdb_data))
+        mock_get_sdbs_resp = self._mock_response(content=json.dumps([self.sdb_data]))
+        mock_get.side_effect = [mock_get_sdbs_resp, mock_resp, mock_resp]
+
+        # Calls:
+        #     get_sdb_path -> get_sdb_id -> get_sdbs
 
         path = self.client.get_sdb_path("Disco Events")
 
@@ -354,44 +493,7 @@ class TestCerberusClient(unittest.TestCase):
     @patch('requests.post')
     def test_create_sdb(self, mock_get):
         """ Test creation of sdb """
-        sdb_data = {
-            'id': '5f0-99-414-bc-e5909c',
-            'name': 'Disco Events',
-            'description': 'Studio 54',
-            'path': 'app/disco-events/',
-            'category_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
-            'created_by': 'tester@studio54.com',
-            'created_ts': '1978-11-27T23:08:14.027Z',
-            'iam_principal_permissions': [
-                {
-                    'created_by': 'tester@studio54.com',
-                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
-                    'id': 'c8549195-5f2c-ba2c-eb0e-2605d1e58816',
-                    'last_updated_by': 'tester@studio54.com',
-                    'last_updated_ts': '1974-11-17T00:02:30Z',
-                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
-                },
-                {
-                    'created_by': 'tester@studio54.com',
-                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-bar',
-                    'id': 'f57741a2-79c0-7e35-bbf9-82a32a1827eb',
-                    'last_updated_by': 'tester@studio54.com',
-                    'last_updated_ts': '1974-11-17T00:02:30Z',
-                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
-                },
-                {
-                    'created_by': 'tester@studio54.com',
-                    'iam_principal_arn': 'arn:aws:iam::292800423415:role/studio54-office',
-                    'id': '27731199-7055-3c4b-3883-9f01f17bc034',
-                    'last_updated_by': 'tester@studio54.com',
-                    'last_updated_ts': '1974-11-17T00:02:30Z',
-                    'role_id': '8609a0c3-31e5-49ab-914d-c70c35da9478'
-                }
-            ],
-            'owner': 'Admin.Studio.54',
-            'user_group_permissions': []
-        }
-        mock_resp = self._mock_response(content=json.dumps(sdb_data))
+        mock_resp = self._mock_response(content=json.dumps(self.create_sdb_data))
         mock_get.return_value = mock_resp
 
         create = self.client.create_sdb(
@@ -416,7 +518,7 @@ class TestCerberusClient(unittest.TestCase):
             ]
         )
 
-        assert_equals(create, sdb_data)
+        assert_equals(create, self.create_sdb_data)
         assert_in('X-Cerberus-Client', self.client.HEADERS)
         # mock_get.assert_called_once_with(self.cerberus_url + '/v2/safe-deposit-box') mock_get.assert_called_with(
         # self.cerberus_url + '/v2/safe-deposit-box', data={"owner": "Admin.Studio.54", "iam_principal_permissions":
@@ -426,6 +528,125 @@ class TestCerberusClient(unittest.TestCase):
         # {"iam_principal_arn": "arn:aws:iam::292800423415:role/studio54-office", "role_id":
         # "8609a0c3-31e5-49ab-914d-c70c35da9478"}], "description": "Studio 54", "category_id":
         # "244cfc0d-4beb-8189-5056-194f18ead6f4", "name": "Disco Events"}, headers=self.client.HEADERS )
+
+    @patch('requests.put')
+    @patch('requests.get')
+    def test_update_sdb(self, mock_get, mock_put):
+        """ Test creation of sdb """
+
+        sdb_id =  self.create_sdb_data['id']
+        old_iam_principals = self.create_sdb_data['iam_principal_permissions']
+        updated_iam_principals = old_iam_principals[1:-1]
+        updated_description = "new updated description"
+        new_user_group_perms = [{'created_by': 'admin@arkansas.com',
+                                 'created_ts': '2021-10-04T17:02:51.862Z',
+                                 'id': '333334-fac3-eeee-bdbe-324ee6',
+                                 'last_updated_by': 'admin@hamfest.com',
+                                 'last_updated_ts': '2022-05-27T16:35:49.965Z',
+                                 'name': 'Care.Dog',
+                                 'role_id': 'fffeee3-b33f-1ee7-444-23435'}]
+
+        new_sdb_data = copy.deepcopy(self.create_sdb_data)
+        new_sdb_data['iam_principal_permissions'] = updated_iam_principals
+        new_sdb_data['description'] = updated_description
+        new_sdb_data['user_group_permissions'] = new_user_group_perms
+
+
+        mock_get_resp = self._mock_response(content=json.dumps(self.create_sdb_data))
+        mock_get.return_value = mock_get_resp
+        mock_put_resp = self._mock_response(content=json.dumps(new_sdb_data))
+        mock_put.return_value = mock_put_resp
+
+        resp = self.client.update_sdb(sdb_id, owner="new_owner",
+                                      description="new desc",
+                                      user_group_permissions=new_user_group_perms,
+                                      iam_principal_permissions=updated_iam_principals)
+
+        assert_equals(resp['description'], updated_description)
+
+        resp = self.client.update_sdb(sdb_id)
+        assert_equals(resp['description'], updated_description)
+
+        no_description_sdb = copy.deepcopy(self.create_sdb_data)
+        del no_description_sdb['description']
+
+        mock_get_resp = self._mock_response(content=json.dumps(no_description_sdb))
+        mock_get.return_value = mock_get_resp
+
+        resp = self.client.update_sdb(sdb_id, owner="new_owner",
+                                      description="new desc",
+                                      user_group_permissions=new_user_group_perms,
+                                      iam_principal_permissions=updated_iam_principals)
+        assert_equals(resp['description'], updated_description)
+
+    @patch('requests.post')
+    def test_create_sdb_bad_args(self, mock_post):
+        sdb_data = {
+            'id': '5f0-99-414-bc-e5909c',
+            'name': 'Disco Events',
+            'description': 'Studio 54',
+            'path': 'app/disco-events/',
+            'category_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+            'created_by': 'tester@studio54.com',
+            'created_ts': '1978-11-27T23:08:14.027Z',
+            'iam_principal_permissions': [],
+            'owner': 'Admin.Studio.54',
+            'description': 'test sdb',
+            'user_group_permissions': []
+        }
+        mock_resp = self._mock_response(content=json.dumps(sdb_data))
+        mock_post.return_value = mock_resp
+
+        resp = self.client.create_sdb('Disco Events',
+                                      '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                                      'Admin.Studio54', "test sdb")
+        assert_equals(resp['path'], 'app/disco-events/')
+
+        with self.assertRaises(TypeError):
+            resp = self.client.create_sdb('Disco Events',
+                                          '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                                          'Admin.Studio54', "test sdb",
+                                          user_group_permissions={})
+
+        with self.assertRaises(TypeError):
+            resp = self.client.create_sdb('Disco Events',
+                                          '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                                          'Admin.Studio54', "test sdb",
+                                          iam_principal_permissions={})
+
+        perms = [{'name': 'Nike.FGPP.Special.Accounts',
+                  'role_id': '3e4e6cad-e05d-11e7-9e7d-027d629dcc88'}]
+
+        sdb_data['user_group_permissions'] = perms
+
+        mock_resp = self._mock_response(content=json.dumps(sdb_data))
+        mock_post.return_value = mock_resp
+
+        resp = self.client.create_sdb('Disco Events',
+                                      '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                                      'Admin.Studio54', "test sdb",
+                                      user_group_permissions=perms)
+        assert len(resp['user_group_permissions'])
+
+    @patch('requests.delete')
+    def test_delete_sdb(self, mock_delete):
+        sdb_data = {'category_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'created_by': 'tester@studio54.com',
+                    'created_ts': '1978-11-27T23:08:14.027Z',
+                    'description': 'test sdb',
+                    'iam_principal_permissions': [],
+                    'id': '9a39f919-71b0-4a19-a1e5-0ba11adedf70',
+                    'last_updated_by': 'tester@studio54.com',
+                    'last_updated_ts': '2022-05-27T15:02:42.628Z',
+                    'name': 'Disco Events',
+                    'owner': 'Admin.Studio.54',
+                    'path': 'app/disco-events/',
+                    'user_group_permissions': []}
+        mock_resp = self._mock_response(content=json.dumps(sdb_data))
+        mock_delete.return_value = mock_resp
+
+        resp = self.client.delete_sdb('9a39f919-71b0-4a19-a1e5-0ba11adedf70')
+        assert resp.json()['path'] == 'app/disco-events/'
 
     @patch('requests.get')
     def test_get_sdb_keys(self, mock_get):
@@ -513,14 +734,18 @@ class TestCerberusClient(unittest.TestCase):
             params=payload, headers=self.client.HEADERS
         )
 
-    @patch('cerberus.client.CerberusClient._parse_metadata_filename')
     @patch('requests.get')
-    def test_getting_a_file(self, mock_get, mock_parse):
+    def test_getting_a_file(self, mock_get):
         """ get_file: Testing the correct file is returned"""
 
-        mock_parse.return_value = self.file_data
-        mock_resp = self._mock_response(content=json.dumps(self.file_data, ensure_ascii=False))
+        headers = self.file_data.copy()
+        del headers['data']
+        mock_resp = self._mock_response(content=json.dumps(self.file_data), headers=headers)
         mock_get.return_value = mock_resp
+
+        # Calls:
+        #     get_file -> _get_file
+        #                 _parse_metadata_filename
 
         secret_file = self.client.get_file('fake/path/test.png')
 
@@ -589,9 +814,42 @@ class TestCerberusClient(unittest.TestCase):
             ]
         }
 
-        mock_resp = self._mock_response(content=json.dumps(version_data))
-        mock_get.return_value = mock_resp
+        prev_version_data = {
+            'has_next': True,
+            'next_offset': None,
+            'limit': 1,
+            'offset': 1,
+            'version_count_in_result': 1,
+            'total_version_count': 2,
+            'secure_data_version_summaries': [
+                {
+                    'id': '00000000-0000-0000-0000-000000112345',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-1eeeeeeeeee',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                },
+                {
+                    'id': '00000000-0000-0000-0000-000000023456',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18eee6f4',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                }
+            ]
+        }
 
+        mock_resp = self._mock_response(content=json.dumps(version_data))
+        mock_prev_resp = self._mock_response(content=json.dumps(prev_version_data))
+        mock_get.side_effect = [mock_prev_resp, mock_resp]
+
+        _files = self.client.get_file_versions('fake/path', limit=1, offset=1)
         files = self.client.get_file_versions('fake/path', limit=1, offset=1)
 
         # check to make sure we got the right file
@@ -605,6 +863,28 @@ class TestCerberusClient(unittest.TestCase):
             params={'limit': '1', 'offset': '1'},
             headers=self.client.HEADERS
         )
+
+        mock_get.reset_mock()
+        prev_version_data['has_next'] = False
+        mock_prev_resp = self._mock_response(content=json.dumps(prev_version_data))
+        mock_get.return_value = mock_prev_resp
+        mock_get.side_effect = None
+        version_info = self.client._get_all_file_versions('fake/path')
+        versions = []
+        try:
+            for version in version_info:
+                versions.append(version)
+
+        except Exception:
+            pass
+
+        assert versions
+        assert_equals(versions[0]['version']['id'], '00000000-0000-0000-0000-000000112345')
+        assert_equals(versions[1]['version']['id'], '00000000-0000-0000-0000-000000023456')
+
+#        try:
+#            while(stuff
+
 
     @patch("{0}.open".format(builtins_str), new_callable=mock_open, read_data="data")
     @patch('cerberus.network_util.request_with_retry')
@@ -628,7 +908,82 @@ class TestCerberusClient(unittest.TestCase):
             mock_retry.assert_called_with(c_url + base_f, 'post', 3, files={'file-content': (base_f, mfile)},
                                           headers=headers)
 
+        headers['Content-Type'] = 'text/plain'
+        resp = self.client.put_file(str.join("", [sdb_path, 'test.txt']), open('test.txt', 'rb'), content_type='text/plain')
+
         # ---- secrets ----
+
+    @patch('requests.delete')
+    def test_delete_file(self, mock_delete):
+        mock_resp = self._mock_response(content=json.dumps(''))
+        mock_delete.return_value = mock_resp
+
+        secure_data_path = 'app/test.txt'
+        resp = self.client.delete_file(secure_data_path)
+
+        expected_url = self.cerberus_url + '/v1/secure-file/' + secure_data_path
+        mock_delete.assert_called_with(expected_url,
+                                       headers={'Content-Type': 'application/json',
+                                                'X-Cerberus-Token': 'ua_token',
+                                                'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+
+
+    @patch('requests.delete')
+    def test_delete_secret(self, mock_delete):
+        mock_resp = self._mock_response(content=json.dumps(''))
+        mock_delete.return_value = mock_resp
+
+        secure_data_path = 'app/test/snack'
+        resp = self.client.delete_secret(secure_data_path)
+
+        expected_url = self.cerberus_url + '/v1/secret/' + secure_data_path
+        mock_delete.assert_called_with(expected_url,
+                                       headers={'Content-Type': 'application/json',
+                                                'X-Cerberus-Token': 'ua_token',
+                                                'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+
+    @patch('cerberus.network_util.request_with_retry')
+    def test_put_secret(self, mock_retry):
+        """ put_secret: Test creating or updating a secret"""
+        assert_equals(self.cerberus_url, "https://cerberus.fake.com")
+
+        secure_data_path ="/".join([self.cerberus_url, "v1/secret", self.sdb_data["path"]])
+        assert_equals(secure_data_path, "https://cerberus.fake.com/v1/secret/app/disco-events/")
+
+        secret = {"contact": {"key": "10011"}}
+        new_secret = {"contact": {"key": "10012"}}
+
+        secret_data = {"data": secret}
+
+        headers = self.client.HEADERS.copy()
+        upload = self.client.put_secret('app/disco-events/', secret, False)
+        mock_retry.assert_called_with(secure_data_path, 'post', 3, data=json.dumps(secret), headers=headers)
+
+        mock_retry.reset_mock()
+        mock_old_secret_resp = self._mock_response(status=204, content=json.dumps(secret_data))
+        mock_204_resp = self._mock_response(status=204, content='')
+
+        mock_retry.side_effect = [mock_old_secret_resp, mock_204_resp]
+        upload = self.client.put_secret('app/disco-events/', new_secret, True)
+        assert_equals(upload.status_code, 204)
+
+        mock_retry.reset_mock()
+        mock_retry.side_effect = None
+        mock_404 = self._mock_response(status=404, content=json.dumps(secret_data))
+        mock_retry.return_value = mock_404
+
+        with self.assertRaises(CerberusClientException):
+            self.client.put_secret('app/disco-events/', new_secret, True)
+
+
+        mock_retry.reset_mock()
+        mock_okay_resp = self._mock_response(status=404, content=json.dumps(secret_data))
+        #mock_retry.side_effect = [mock_okay_resp, mock_204_resp]
+        mock_retry.side_effect = [mock_okay_resp, mock_204_resp]
+        upload = self.client.put_secret('app/disco-events/', new_secret, True)
+        assert_equals(upload.content, b'')
+
+
 
     @patch('requests.get')
     def test_getting_a_secret(self, mock_get):
@@ -702,6 +1057,19 @@ class TestCerberusClient(unittest.TestCase):
         )
 
     @patch('requests.get')
+    def test_list_secrets(self, mock_get):
+        secret_info = {'auth': None, 'data': {'keys': ['foo']},
+                       'lease_duration': 3600, 'lease_id': '', 'metadata': {},
+                       'renewable': False, 'request_id': None,
+                       'warnings': None, 'wrap_info': None}
+
+        mock_resp = self._mock_response(content=json.dumps(secret_info))
+        mock_get.return_value = mock_resp
+        secrets = self.client.list_secrets('fake/path')
+
+        assert_equals(secrets['data']['keys'], ['foo'])
+
+    @patch('requests.get')
     def test_getting_secret_versions(self, mock_get):
         """ get_secret_versions: Ensure that the version information of a secret is returned """
         version_data = {
@@ -741,6 +1109,73 @@ class TestCerberusClient(unittest.TestCase):
             params={'limit': '1', 'offset': '1'},
             headers=self.client.HEADERS
         )
+
+        multi_version_data = {
+            'has_next': False,
+            'next_offset': None,
+            'limit': 1,
+            'offset': 1,
+            'version_count_in_result': 1,
+            'total_version_count': 2,
+            'secure_data_version_summaries': [
+                {
+                    'id': '00000000-0000-0000-0000-000000012345',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-194f18ead6f4',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                },
+                {
+                    'id': '00000000-0000-0000-0000-000000112345',
+                    'sdbox_id': '244cfc0d-4beb-8189-5056-1eeeeeeeeeee',
+                    'path': 'fake/path',
+                    'action': 'UPDATE',
+                    'version_created_by': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'version_created_ts': '1978-11-27T23:08:14.027Z',
+                    'action_principal': 'arn:aws:iam::292800423415:role/studio54-dancefloor',
+                    'action_ts': '1978-11-27T23:08:14.027Z'
+                }
+            ]
+        }
+
+        mock_resp_multi = self._mock_response(content=json.dumps(multi_version_data))
+        mock_get.reset_mock()
+        mock_get.return_value = mock_resp_multi
+
+        version_info = self.client._get_all_secret_version_ids('fake/path')
+        versions = []
+        for version in version_info:
+            versions.append(version)
+
+
+        assert_equals(versions[0]['id'], '00000000-0000-0000-0000-000000012345')
+        assert_equals(versions[1]['id'], '00000000-0000-0000-0000-000000112345')
+
+
+        secret_data = { "data": { "sushi": "ikenohana", "ramen": "yuzu" }}
+        secret_data_json = json.dumps(secret_data)
+        v1_data_resp = self._mock_response(status=200, content=secret_data_json)
+
+        secret_data['data']['ramen'] = 'shouyu' # python 2.7 did not like unicode
+        secret_data_json = json.dumps(secret_data)
+        v2_data_resp = self._mock_response(status=200, content=secret_data_json)
+
+
+        mock_get.reset_mock()
+        mock_get.return_value = None
+        mock_get.side_effect = [mock_resp_multi, v1_data_resp, v2_data_resp]
+
+        version_info = self.client._get_all_secret_versions('fake/path')
+        versions = []
+        for version in version_info:
+            versions.append(version)
+
+        assert_equals(versions[0]['secret']['ramen'], 'yuzu')
+        assert_equals(versions[1]['secret']['ramen'], 'shouyu')
+
 
     @patch('requests.get')
     def test_get_secrets_invalid_path(self, mget):
@@ -863,7 +1298,8 @@ class TestCerberusClient(unittest.TestCase):
     def test_environment_variable_overrides_user_auth(self):
         anotherClient = CerberusClient(
             self.cerberus_url,
-            'testuser', 'hardtoguesspasswd'
+            'testuser', 'hardtoguesspasswd',
+            verbose=False
         )
         assert_equals(anotherClient.get_token(), "dashboardtoken")
 
@@ -945,3 +1381,29 @@ class TestCerberusClient(unittest.TestCase):
             params={'offset': 1},
             headers=self.client.HEADERS
         )
+
+    @patch('requests.head')
+    def test_get_file_metadata(self, mock_head):
+        resp_dict = {'Date': 'Fri, 27 May 2022 18:37:56 GMT',
+                     'Content-Type': 'text/plain', 'Content-Length': '4',
+                     'Connection': 'keep-alive',
+                     'Content-Disposition': 'attachment; filename="test.txt"'}
+        mock_resp = self._mock_response(content=json.dumps(resp_dict))
+        mock_head.return_value = mock_resp
+
+        secure_data_path = 'app/test.txt'
+        resp = self.client.get_file_metadata(secure_data_path)
+        expected_url = self.cerberus_url + '/v1/secure-file/' + secure_data_path
+        mock_head.assert_called_with(expected_url,
+                                     params={'versionId': 'CURRENT'},
+                                     headers={'Content-Type': 'application/json',
+                                              'X-Cerberus-Token': 'ua_token',
+                                              'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+
+        resp = self.client.get_file_metadata(secure_data_path, version='3')
+        mock_head.assert_called_with(expected_url,
+                                     params={'versionId': '3'},
+                                     headers={'Content-Type': 'application/json',
+                                              'X-Cerberus-Token': 'ua_token',
+                                              'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+
