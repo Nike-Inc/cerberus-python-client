@@ -3,7 +3,7 @@ import logging
 
 __all__ = ['aws_auth', 'client', 'network_util', 'url_util', 'user_auth']
 
-CLIENT_VERSION = '2.5.3'
+CLIENT_VERSION = '2.5.4'
 
 
 class CerberusClientException(Exception):

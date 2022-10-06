@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3.1.0
+        uses: actions/setup-python@v4.2.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -34,9 +34,9 @@ jobs:
         run: |
           tox
       - name: Upload coverage report to CodeCov
-        uses: codecov/codecov-action@v2.1.0
+        uses: codecov/codecov-action@v3.1.1
         with:
-          file: coverage.xml # optional
+          files: coverage.xml # optional
           fail_ci_if_error: true # optional (default = false)
           verbose: true
       - name: Slack notification when master build fails
