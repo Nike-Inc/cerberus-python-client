@@ -34,9 +34,9 @@ jobs:
         run: |
           tox
       - name: Upload coverage report to CodeCov
-        uses: codecov/codecov-action@v2.1.0
+        uses: codecov/codecov-action@v3.1.1
         with:
-          file: coverage.xml # optional
+          files: coverage.xml # optional
           fail_ci_if_error: true # optional (default = false)
           verbose: true
       - name: Slack notification when master build fails

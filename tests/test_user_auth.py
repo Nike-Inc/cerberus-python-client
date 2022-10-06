@@ -174,13 +174,13 @@ class TestUserAuth(object):
                             json={'device_id': '225',
                                   'state_token': '0127a384d305138d4e'},
                             headers={'Content-Type': 'application/json',
-                                     'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+                                     'X-Cerberus-Client': 'CerberusPythonClient/2.5.4'})
 
         check_call = call('https://cerberus.fake.com/v2/auth/mfa_check',
                           json={'otp_token': '0987654321',
                                 'device_id': '225', 'state_token': '0127a384d305138d4e'},
                           headers={'Content-Type': 'application/json',
-                                   'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+                                   'X-Cerberus-Client': 'CerberusPythonClient/2.5.4'})
 
         expected_calls = [trigger_call, check_call]
 

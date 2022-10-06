@@ -925,7 +925,7 @@ class TestCerberusClient(unittest.TestCase):
         mock_delete.assert_called_with(expected_url,
                                        headers={'Content-Type': 'application/json',
                                                 'X-Cerberus-Token': 'ua_token',
-                                                'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+                                                'X-Cerberus-Client': 'CerberusPythonClient/2.5.4'})
 
 
     @patch('requests.delete')
@@ -940,7 +940,7 @@ class TestCerberusClient(unittest.TestCase):
         mock_delete.assert_called_with(expected_url,
                                        headers={'Content-Type': 'application/json',
                                                 'X-Cerberus-Token': 'ua_token',
-                                                'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+                                                'X-Cerberus-Client': 'CerberusPythonClient/2.5.4'})
 
     @patch('cerberus.network_util.request_with_retry')
     def test_put_secret(self, mock_retry):
@@ -1398,12 +1398,12 @@ class TestCerberusClient(unittest.TestCase):
                                      params={'versionId': 'CURRENT'},
                                      headers={'Content-Type': 'application/json',
                                               'X-Cerberus-Token': 'ua_token',
-                                              'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+                                              'X-Cerberus-Client': 'CerberusPythonClient/2.5.4'})
 
         resp = self.client.get_file_metadata(secure_data_path, version='3')
         mock_head.assert_called_with(expected_url,
                                      params={'versionId': '3'},
                                      headers={'Content-Type': 'application/json',
                                               'X-Cerberus-Token': 'ua_token',
-                                              'X-Cerberus-Client': 'CerberusPythonClient/2.5.3'})
+                                              'X-Cerberus-Client': 'CerberusPythonClient/2.5.4'})
 
