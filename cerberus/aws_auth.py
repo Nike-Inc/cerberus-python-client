@@ -17,6 +17,7 @@ limitations under the License.*
 # For python 2.7
 from __future__ import print_function
 from botocore import session, awsrequest, auth
+from boto3.session import Session
 import logging
 import sys
 import os
@@ -54,7 +55,7 @@ def _get_aws_web_identity_token():
     return web_identity_token
 
 
-def _get_aws_credentials(session=None):
+def _get_aws_credentials(aws_session=None):
     """
     Retrieve AWS credentials from a boto3 session.
 
@@ -64,10 +65,10 @@ def _get_aws_credentials(session=None):
       which to infer credentials. If not provided, a session will be
       created using [AWS environment variables](https://go.aws/42HrK0R).
     """
-    if not session:
+    if not aws_session:
         arn = None
         profile_name = os.environ.get("AWS_PROFILE", None)
-        session = session.Session(
+        aws_session = Session(
             profile_name=profile_name
         )
         if not profile_name:
@@ -91,12 +92,12 @@ def _get_aws_credentials(session=None):
                         RoleArn=arn,
                         RoleSessionName=session_name,
                     )["Credentials"]
-                session = session.Session(
+                aws_session = Session(
                     aws_access_key_id=credentials["AccessKeyId"],
                     aws_secret_access_key=credentials["SecretAccessKey"],
                     aws_session_token=credentials["SessionToken"],
                 )
-    return session.get_credentials()
+    return aws_session.get_credentials()
 
 
 class AWSAuth(object):
